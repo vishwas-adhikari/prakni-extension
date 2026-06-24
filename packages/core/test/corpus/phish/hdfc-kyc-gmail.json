@@ -1,0 +1,9 @@
+{
+  "id": "phish-hdfc-kyc-002",
+  "senderName": "HDFC Bank",
+  "senderEmail": "hdfc.netbanking.kyc@gmail.com",
+  "subject": "HDFC NetBanking suspended",
+  "bodyText": "Your HDFC Bank NetBanking has been suspended due to incomplete KYC. Verify your details within 24 hours to restore access.",
+  "links": [{ "text": "Restore access", "url": "http://hdfc-kyc-online.in/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

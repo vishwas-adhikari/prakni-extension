@@ -1,0 +1,11 @@
+{
+  "id": "legit-google-001",
+  "senderName": "Google",
+  "senderEmail": "no-reply@accounts.google.com",
+  "subject": "Your Google verification code",
+  "bodyText": "Your verification code is 481920. Enter this code to verify it's you. If you didn't request this, you can ignore this email.",
+  "links": [
+    { "text": "Google Account help", "url": "https://support.google.com/accounts" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

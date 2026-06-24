@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-007",
+  "senderName": "WhatsApp",
+  "senderEmail": "verify@whatsapp-account-secure.com",
+  "subject": "Verify your WhatsApp account",
+  "bodyText": "Your WhatsApp account will be deactivated within 24 hours unless you verify it. Confirm your number to keep your account active.",
+  "links": [{ "text": "Verify number", "url": "http://whatsapp-account-secure.com/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

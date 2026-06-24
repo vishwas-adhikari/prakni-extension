@@ -1,0 +1,9 @@
+{
+  "id": "legit-razorpay-001",
+  "senderName": "Razorpay",
+  "senderEmail": "noreply@razorpay.com",
+  "subject": "Payment received",
+  "bodyText": "Hi, we have received your payment of Rs. 4,999. Your invoice is available in your dashboard. Thank you.",
+  "links": [{ "text": "View dashboard", "url": "https://dashboard.razorpay.com" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

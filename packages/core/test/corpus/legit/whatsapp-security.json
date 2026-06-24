@@ -1,0 +1,9 @@
+{
+  "id": "legit-whatsapp-001",
+  "senderName": "WhatsApp",
+  "senderEmail": "security@whatsapp.com",
+  "subject": "Your security code changed",
+  "bodyText": "The security code for one of your contacts changed. This usually happens when someone reinstalls WhatsApp or switches phones.",
+  "links": [{ "text": "Learn more", "url": "https://faq.whatsapp.com/security" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-razorpay-reminder-001",
+  "senderName": "Razorpay",
+  "senderEmail": "noreply@razorpay.com",
+  "subject": "Payment reminder: invoice due tomorrow",
+  "bodyText": "This is a reminder that your invoice of Rs. 9,999 is due tomorrow. Please complete the payment immediately to avoid service interruption. Update your bank account details if they have changed.",
+  "links": [{ "text": "Pay invoice", "url": "https://dashboard.razorpay.com/invoices" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

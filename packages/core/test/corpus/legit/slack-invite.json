@@ -1,0 +1,9 @@
+{
+  "id": "legit-slack-001",
+  "senderName": "Slack",
+  "senderEmail": "feedback@slack.com",
+  "subject": "You've been invited to a workspace",
+  "bodyText": "Priya has invited you to join the Acme Engineering workspace on Slack. Join to start collaborating with your team.",
+  "links": [{ "text": "Join workspace", "url": "https://slack.com/invite/acme" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

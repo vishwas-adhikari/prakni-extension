@@ -1,0 +1,9 @@
+{
+  "id": "legit-paytm-001",
+  "senderName": "Paytm",
+  "senderEmail": "noreply@paytm.com",
+  "subject": "Your payment was successful",
+  "bodyText": "You paid Rs. 350 to Blue Tokai Coffee. Your transaction is complete. Thank you for using Paytm.",
+  "links": [{ "text": "View receipt", "url": "https://paytm.com/receipt" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "phish-credharvest-002",
+  "senderName": "Office 365",
+  "senderEmail": "no-reply@office365-mail-verify.com",
+  "subject": "Your Office365 password expires today",
+  "bodyText": "Your Office365 password expires today. Verify your account and sign in to keep the same password and avoid losing access.",
+  "links": [{ "text": "Keep password", "url": "http://office365-mail-verify.com/account/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

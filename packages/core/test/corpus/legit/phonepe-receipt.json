@@ -1,0 +1,9 @@
+{
+  "id": "legit-phonepe-001",
+  "senderName": "PhonePe",
+  "senderEmail": "no-reply@phonepe.com",
+  "subject": "Payment of Rs. 1,150 successful",
+  "bodyText": "Your payment of Rs. 1,150 to Reliance Fresh is successful. Transaction ID T2605. Thank you for using PhonePe.",
+  "links": [{ "text": "Open PhonePe", "url": "https://www.phonepe.com" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

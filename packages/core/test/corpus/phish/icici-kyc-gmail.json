@@ -1,0 +1,9 @@
+{
+  "id": "phish-icici-kyc-001",
+  "senderName": "ICICI Bank KYC",
+  "senderEmail": "icici.kyc.help@gmail.com",
+  "subject": "ICICI account will be blocked",
+  "bodyText": "Your ICICI Bank account will be blocked within 24 hours because your KYC is incomplete. Update your details now to continue banking.",
+  "links": [{ "text": "Update KYC", "url": "http://icici-kyc-portal.in/account/update" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

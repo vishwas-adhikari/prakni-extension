@@ -1,0 +1,9 @@
+{
+  "id": "legit-google-login-001",
+  "senderName": "Google",
+  "senderEmail": "no-reply@accounts.google.com",
+  "subject": "New sign-in on Windows",
+  "bodyText": "Your Google Account was just signed in to on a new Windows device. If this was you, you don't need to do anything. If not, we'll help you secure your account.",
+  "links": [{ "text": "Check activity", "url": "https://myaccount.google.com/security" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

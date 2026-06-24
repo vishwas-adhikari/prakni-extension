@@ -1,0 +1,9 @@
+{
+  "id": "legit-vercel-001",
+  "senderName": "Vercel",
+  "senderEmail": "notifications@vercel.com",
+  "subject": "Deployment ready",
+  "bodyText": "Your deployment for project credmail-site is ready and live in production. Build completed in 38 seconds.",
+  "links": [{ "text": "View deployment", "url": "https://vercel.com/dashboard" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "phish-sbi-kyc-001",
+  "senderName": "SBI Bank Alert",
+  "senderEmail": "sbi.secure.kyc@gmail.com",
+  "subject": "Your SBI account KYC is pending",
+  "bodyText": "Dear SBI customer, your account KYC is pending. Verify your details within 24 hours to avoid account suspension.",
+  "links": [{ "text": "Complete KYC", "url": "http://sbi-kyc-update.in/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

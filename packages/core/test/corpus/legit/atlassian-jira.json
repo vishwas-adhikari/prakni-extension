@@ -1,0 +1,9 @@
+{
+  "id": "legit-atlassian-001",
+  "senderName": "Jira",
+  "senderEmail": "jira@atlassian.com",
+  "subject": "CRED-218 was assigned to you",
+  "bodyText": "An issue, CRED-218 'Tune corroboration thresholds', was assigned to you by the project lead. It is due next sprint.",
+  "links": [{ "text": "View issue", "url": "https://acme.atlassian.net/browse/CRED-218" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

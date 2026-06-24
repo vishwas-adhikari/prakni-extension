@@ -1,0 +1,9 @@
+{
+  "id": "legit-sbi-002",
+  "senderName": "SBI Card",
+  "senderEmail": "statements@sbi.co.in",
+  "subject": "Your SBI Card statement is ready",
+  "bodyText": "Dear Cardholder, your SBI Card statement for May 2026 is ready. Your total amount due is shown in the statement.",
+  "links": [{ "text": "View statement", "url": "https://www.sbicard.com/statement" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

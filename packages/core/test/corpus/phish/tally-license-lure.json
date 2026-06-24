@@ -1,0 +1,9 @@
+{
+  "id": "phish-tally-001",
+  "senderName": "Tally Solutions",
+  "senderEmail": "renewals@tally-license-renew.com",
+  "subject": "Your Tally license expires soon",
+  "bodyText": "Your Tally license expires within 24 hours. Update your license now to keep using Tally without interruption.",
+  "links": [{ "text": "Renew license", "url": "http://tally-license-renew.com/update-license" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

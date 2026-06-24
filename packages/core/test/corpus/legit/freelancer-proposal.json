@@ -1,0 +1,9 @@
+{
+  "id": "legit-vendor-003",
+  "senderName": "Priya Designs",
+  "senderEmail": "priya@priya-designs.in",
+  "subject": "Proposal for your website redesign",
+  "bodyText": "Hi, thanks for the call earlier. I've put together a proposal for the website redesign with timelines and pricing. Let me know your thoughts.",
+  "links": [{ "text": "Open proposal", "url": "https://priya-designs.in/proposal" }],
+  "auth": { "spf": "unknown", "dkim": "unknown", "dmarc": "unknown", "aligned": null }
+}

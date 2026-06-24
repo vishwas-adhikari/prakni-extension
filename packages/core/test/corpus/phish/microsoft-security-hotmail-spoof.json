@@ -1,0 +1,9 @@
+{
+  "id": "phish-namespoof-003",
+  "senderName": "Microsoft Security",
+  "senderEmail": "ms.security.alert@hotmail.com",
+  "subject": "Unusual activity detected",
+  "bodyText": "Microsoft detected unusual activity on your account. Review the activity now to prevent your account from being locked.",
+  "links": [{ "text": "Review activity", "url": "http://ms-account-review.com/secure" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

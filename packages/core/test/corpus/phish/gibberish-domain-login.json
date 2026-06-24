@@ -1,0 +1,9 @@
+{
+  "id": "phish-gibberish-001",
+  "senderName": "Security Team",
+  "senderEmail": "no-reply@mail-alert-service.com",
+  "subject": "Action needed on your account",
+  "bodyText": "Your account requires re-verification. Please complete it within 24 hours to avoid losing access.",
+  "links": [{ "text": "Re-verify", "url": "http://x7kj2m.xyz/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

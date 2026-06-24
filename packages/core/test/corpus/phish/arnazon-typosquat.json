@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-004",
+  "senderName": "Amazon Shipping",
+  "senderEmail": "shipping@arnazon.com",
+  "subject": "Confirm your delivery address",
+  "bodyText": "Your Amazon package is on hold. Confirm your delivery address to release it for delivery.",
+  "links": [{ "text": "Confirm address", "url": "http://arnazon.com/confirm" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

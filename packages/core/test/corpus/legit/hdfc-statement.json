@@ -1,0 +1,11 @@
+{
+  "id": "legit-hdfc-001",
+  "senderName": "HDFC Bank",
+  "senderEmail": "alerts@hdfcbank.com",
+  "subject": "Your monthly account statement is ready",
+  "bodyText": "Dear Customer, your account statement for May 2026 is now available. Please log in to NetBanking to view your transactions. This is an automated message.",
+  "links": [
+    { "text": "NetBanking login", "url": "https://netbanking.hdfcbank.com" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "phish-rawip-002",
+  "senderName": "Accounts Payable",
+  "senderEmail": "ap@vendor-payments-desk.com",
+  "subject": "Outstanding invoice payment",
+  "bodyText": "Please process the outstanding invoice via wire transfer today. Use the secure portal below to confirm the payment.",
+  "links": [{ "text": "Pay invoice", "url": "http://103.21.58.7/invoice-pay" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

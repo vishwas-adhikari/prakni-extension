@@ -1,0 +1,12 @@
+{
+  "id": "legit-swiggy-001",
+  "senderName": "Swiggy",
+  "senderEmail": "offers@swiggy.in",
+  "subject": "Your weekend cravings, sorted",
+  "bodyText": "The weekend is here. Discover new restaurants near you and get free delivery on your next three orders. Order now on Swiggy.",
+  "links": [
+    { "text": "Order now", "url": "https://swiggy.us12.list-manage.com/track/click?u=abc&id=123" },
+    { "text": "Unsubscribe", "url": "https://swiggy.us12.list-manage.com/unsubscribe?u=abc" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

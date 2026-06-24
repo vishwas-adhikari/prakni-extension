@@ -1,0 +1,10 @@
+{
+  "id": "phish-weakonly-001",
+  "senderName": "Refund Services",
+  "senderEmail": "noreply@refund-portal-offers.com",
+  "subject": "Your refund is waiting",
+  "bodyText": "Urgent: act now to claim your refund before it expires. The amount will be returned to the sender if not claimed soon.",
+  "links": [{ "text": "More information", "url": "https://myrefund.info/details" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false },
+  "expectSafe": true
+}

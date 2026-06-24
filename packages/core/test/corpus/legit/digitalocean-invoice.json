@@ -1,0 +1,9 @@
+{
+  "id": "legit-do-001",
+  "senderName": "DigitalOcean",
+  "senderEmail": "billing@digitalocean.com",
+  "subject": "Your invoice for May 2026",
+  "bodyText": "Thank you for being a DigitalOcean customer. Your invoice for May 2026 is USD 24.00 and has been charged to your card on file.",
+  "links": [{ "text": "View invoice", "url": "https://cloud.digitalocean.com/account/billing" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

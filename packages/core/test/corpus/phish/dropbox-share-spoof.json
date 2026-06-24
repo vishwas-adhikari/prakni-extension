@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-010",
+  "senderName": "Dropbox",
+  "senderEmail": "no-reply@dropbox-file-share.com",
+  "subject": "A document was shared with you",
+  "bodyText": "A confidential document was shared with you on Dropbox. Sign in to verify your account and view the file before the link expires.",
+  "links": [{ "text": "View document", "url": "http://dropbox-file-share.com/account/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

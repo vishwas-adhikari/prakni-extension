@@ -1,0 +1,9 @@
+{
+  "id": "legit-spotify-001",
+  "senderName": "Spotify",
+  "senderEmail": "no-reply@spotify.com",
+  "subject": "Your Premium receipt",
+  "bodyText": "Thanks for being a Premium member. Your payment of Rs. 119 for this month was successful.",
+  "links": [{ "text": "Manage plan", "url": "https://www.spotify.com/account" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

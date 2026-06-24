@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-004",
+  "senderName": "LinkedIn",
+  "senderEmail": "invitations@linkedin-jobs-alert.com",
+  "subject": "You appeared in 9 searches this week",
+  "bodyText": "A recruiter viewed your LinkedIn profile. Sign in to see who is interested and respond before the opportunity closes.",
+  "links": [{ "text": "See who viewed", "url": "http://linkedin-jobs-alert.com/secure/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

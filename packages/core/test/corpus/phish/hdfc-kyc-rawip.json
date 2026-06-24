@@ -1,0 +1,11 @@
+{
+  "id": "phish-hdfc-001",
+  "senderName": "HDFC Bank KYC",
+  "senderEmail": "update@hdfc-kyc-verify.in",
+  "subject": "URGENT: Your HDFC account KYC is pending",
+  "bodyText": "Dear Customer, your HDFC Bank account will be suspended within 24 hours because your KYC verification is pending. Update your bank account details now to avoid deactivation.",
+  "links": [
+    { "text": "Complete KYC now", "url": "http://203.0.113.45/hdfc/kyc-update" }
+  ],
+  "auth": { "spf": "fail", "dkim": "unknown", "dmarc": "fail", "aligned": false }
+}

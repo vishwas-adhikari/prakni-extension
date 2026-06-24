@@ -1,0 +1,12 @@
+{
+  "id": "phish-multistrong-001",
+  "senderName": "PayPal Security",
+  "senderEmail": "security@paypa1-verify.com",
+  "subject": "Your PayPal account is permanently limited",
+  "bodyText": "Your PayPal account has been permanently limited. Verify your identity immediately to recover access before it is closed.",
+  "links": [
+    { "text": "https://www.paypal.com/login", "url": "http://paypa1-verify.com/login" },
+    { "text": "Backup verification", "url": "http://45.9.12.3/secure" }
+  ],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-dropbox-001",
+  "senderName": "Dropbox",
+  "senderEmail": "no-reply@dropbox.com",
+  "subject": "Rahul shared a folder with you",
+  "bodyText": "Rahul shared the folder 'Q2 Designs' with you on Dropbox. You can view and edit the files any time.",
+  "links": [{ "text": "View folder", "url": "https://www.dropbox.com/sh/q2designs" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

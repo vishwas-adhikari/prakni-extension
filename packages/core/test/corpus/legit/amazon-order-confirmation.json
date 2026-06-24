@@ -1,0 +1,11 @@
+{
+  "id": "legit-amazon-001",
+  "senderName": "Amazon.in",
+  "senderEmail": "auto-confirm@amazon.in",
+  "subject": "Your Amazon.in order has been placed",
+  "bodyText": "Thank you for your order. Your payment of Rs. 2,499 was successful and your package will arrive by Friday. You can view or manage your order any time.",
+  "links": [
+    { "text": "View order details", "url": "https://www.amazon.in/gp/css/order-history" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

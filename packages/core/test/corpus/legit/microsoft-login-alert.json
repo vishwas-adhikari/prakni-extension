@@ -1,0 +1,9 @@
+{
+  "id": "legit-microsoft-login-001",
+  "senderName": "Microsoft account team",
+  "senderEmail": "account-security-noreply@microsoft.com",
+  "subject": "New sign-in to your Microsoft account",
+  "bodyText": "We noticed a new sign-in to your Microsoft account from a new device. If this was you, you can safely ignore this email.",
+  "links": [{ "text": "Review activity", "url": "https://account.microsoft.com/security" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

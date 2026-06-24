@@ -1,0 +1,11 @@
+{
+  "id": "phish-apple-001",
+  "senderName": "Apple Support",
+  "senderEmail": "appleid@apple-verify.ru",
+  "subject": "Your Apple ID has been locked",
+  "bodyText": "Your Apple ID has been locked for security reasons. You must verify your account within 24 hours or it will be permanently deactivated. Sign in to verify your identity now.",
+  "links": [
+    { "text": "Unlock my Apple ID", "url": "https://apple-verify.ru/unlock" }
+  ],
+  "auth": { "spf": "fail", "dkim": "unknown", "dmarc": "fail", "aligned": false }
+}

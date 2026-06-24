@@ -1,0 +1,9 @@
+{
+  "id": "phish-deceptive-001",
+  "senderName": "IT Helpdesk",
+  "senderEmail": "helpdesk@mail-portal-access.com",
+  "subject": "Mailbox storage full",
+  "bodyText": "Your mailbox is almost full and will stop receiving messages within 24 hours. Sign in to free up space and keep your account active.",
+  "links": [{ "text": "Sign in", "url": "http://mail-portal-access.com/secure/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

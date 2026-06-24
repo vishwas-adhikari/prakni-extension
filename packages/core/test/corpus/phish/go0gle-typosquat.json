@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-006",
+  "senderName": "Google",
+  "senderEmail": "no-reply@go0gle.com",
+  "subject": "Security alert for your account",
+  "bodyText": "A new device signed in to your Google account. If this was not you, review the activity and secure your account.",
+  "links": [{ "text": "Review activity", "url": "http://go0gle.com/security" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

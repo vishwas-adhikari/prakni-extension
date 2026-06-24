@@ -1,0 +1,9 @@
+{
+  "id": "phish-namespoof-002",
+  "senderName": "PayPal Support",
+  "senderEmail": "paypal.support.team@yahoo.com",
+  "subject": "Your PayPal account is limited",
+  "bodyText": "We have limited your PayPal account due to unusual activity. Confirm your information to restore full access.",
+  "links": [{ "text": "Resolve", "url": "http://paypal-resolve.net/account" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

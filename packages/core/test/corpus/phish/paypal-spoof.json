@@ -1,0 +1,11 @@
+{
+  "id": "phish-paypal-001",
+  "senderName": "PayPal Service",
+  "senderEmail": "service@paypal-secure-login.com",
+  "subject": "Your PayPal account has been limited",
+  "bodyText": "We detected unusual activity on your PayPal account. Your account has been suspended until you verify your identity. Please confirm your account details to restore access before it's too late.",
+  "links": [
+    { "text": "https://www.paypal.com/account/verify", "url": "http://paypal-secure-login.com/verify" }
+  ],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

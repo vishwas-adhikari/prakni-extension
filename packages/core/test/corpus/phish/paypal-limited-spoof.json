@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-009",
+  "senderName": "PayPal",
+  "senderEmail": "service@paypal-limited-support.com",
+  "subject": "We have limited your account",
+  "bodyText": "Your PayPal account access has been limited until you confirm your information. Confirm now to restore full access to your account.",
+  "links": [{ "text": "https://www.paypal.com/resolve", "url": "http://paypal-limited-support.com/account/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

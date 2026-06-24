@@ -1,0 +1,9 @@
+{
+  "id": "legit-amazon-002",
+  "senderName": "Amazon.in",
+  "senderEmail": "shipment-tracking@amazon.in",
+  "subject": "Arriving today: your order",
+  "bodyText": "Your order is arriving today. Please ensure someone is available to receive it. Track the delivery in real time.",
+  "links": [{ "text": "Track package", "url": "https://www.amazon.in/track" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

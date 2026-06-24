@@ -1,0 +1,9 @@
+{
+  "id": "legit-apple-001",
+  "senderName": "Apple",
+  "senderEmail": "no_reply@apple.com",
+  "subject": "Your receipt from Apple",
+  "bodyText": "Thank you for your purchase. Your receipt for iCloud+ 200GB (Rs. 219) is below. You can manage your subscription any time.",
+  "links": [{ "text": "Manage subscription", "url": "https://apple.com/account/subscriptions" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

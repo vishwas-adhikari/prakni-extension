@@ -1,0 +1,9 @@
+{
+  "id": "legit-icici-001",
+  "senderName": "ICICI Bank",
+  "senderEmail": "statements@icicibank.com",
+  "subject": "Your ICICI Bank account statement",
+  "bodyText": "Dear Customer, your account statement for May 2026 is now available in iMobile. Thank you for banking with us.",
+  "links": [{ "text": "View statement", "url": "https://www.icicibank.com/statements" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-netlify-001",
+  "senderName": "Netlify",
+  "senderEmail": "team@netlify.com",
+  "subject": "Deploy succeeded for your site",
+  "bodyText": "Your site deploy is published. The latest commit is now live. Build time was 1m 12s.",
+  "links": [{ "text": "Open site dashboard", "url": "https://app.netlify.com" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

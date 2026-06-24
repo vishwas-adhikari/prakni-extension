@@ -1,0 +1,9 @@
+{
+  "id": "phish-namespoof-001",
+  "senderName": "ICICI Bank",
+  "senderEmail": "icicibank.alerts99@gmail.com",
+  "subject": "Important: account verification needed",
+  "bodyText": "Dear customer, we need to verify your account. Please reply with your details to keep your account active.",
+  "links": [{ "text": "Verify", "url": "http://icici-secure.in/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

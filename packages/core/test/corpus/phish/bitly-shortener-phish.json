@@ -1,0 +1,9 @@
+{
+  "id": "phish-shortener-001",
+  "senderName": "Rewards Team",
+  "senderEmail": "rewards@promo-claim-center.com",
+  "subject": "You have a pending reward",
+  "bodyText": "You have a pending reward waiting. Claim it within 24 hours before it expires by tapping the link below.",
+  "links": [{ "text": "Claim reward", "url": "https://bit.ly/3xKpending" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

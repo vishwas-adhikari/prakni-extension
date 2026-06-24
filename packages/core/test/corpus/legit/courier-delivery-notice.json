@@ -1,0 +1,11 @@
+{
+  "id": "legit-courier-001",
+  "senderName": "City Express Couriers",
+  "senderEmail": "notifications@cityexpress-couriers.in",
+  "subject": "Your parcel is out for delivery",
+  "bodyText": "Hello, your parcel is out for delivery and will arrive today. Please confirm your delivery slot within 24 hours so our agent can reach you. Thank you for choosing City Express.",
+  "links": [
+    { "text": "Track shipment", "url": "https://cityexpress-couriers.in/track/8842" }
+  ],
+  "auth": { "spf": "unknown", "dkim": "unknown", "dmarc": "unknown", "aligned": null }
+}

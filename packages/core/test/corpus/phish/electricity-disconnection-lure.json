@@ -1,0 +1,9 @@
+{
+  "id": "phish-electricity-001",
+  "senderName": "Electricity Board",
+  "senderEmail": "billing@power-billdesk.in",
+  "subject": "Final notice: power disconnection today",
+  "bodyText": "Final notice. Your electricity connection will be disconnected tonight due to a pending bill. Pay now to avoid disconnection.",
+  "links": [{ "text": "Pay bill", "url": "http://45.118.23.9/pay-bill" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

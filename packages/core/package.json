@@ -1,0 +1,12 @@
+{
+  "name": "@credmail/core",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Cred Mail detection brain — pure TS, zero DOM/chrome/network.",
+  "license": "UNLICENSED",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

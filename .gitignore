@@ -1,0 +1,54 @@
+# ---- dependencies ----
+node_modules/
+.pnp
+.pnp.js
+
+# ---- build output ----
+dist/
+build/
+packages/*/dist/
+*.tsbuildinfo
+
+# ---- test / coverage ----
+coverage/
+.nyc_output/
+
+# ---- logs ----
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- secrets / environment (NEVER commit) ----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.cer
+secrets.json
+**/secrets/
+# auth tokens (signed tier tokens, registry creds, etc.)
+*.token
+auth_token*
+.npmrc
+
+# ---- caches / temp ----
+.cache/
+.tmp/
+tmp/
+*.tgz
+
+# ---- editor / OS ----
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~

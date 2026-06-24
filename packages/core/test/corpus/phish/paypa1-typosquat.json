@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-001",
+  "senderName": "PayPal",
+  "senderEmail": "support@paypa1.com",
+  "subject": "Confirm your PayPal account",
+  "bodyText": "We could not verify your recent PayPal activity. Log in to confirm your account details and restore access.",
+  "links": [{ "text": "Log in", "url": "http://paypa1.com/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

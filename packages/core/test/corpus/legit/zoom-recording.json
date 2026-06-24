@@ -1,0 +1,9 @@
+{
+  "id": "legit-zoom-001",
+  "senderName": "Zoom",
+  "senderEmail": "no-reply@zoom.us",
+  "subject": "Your cloud recording is ready",
+  "bodyText": "Your cloud recording for 'Weekly Sync' is now available. The recording will be retained for 120 days.",
+  "links": [{ "text": "View recording", "url": "https://zoom.us/recording/share" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

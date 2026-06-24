@@ -1,0 +1,9 @@
+{
+  "id": "legit-vendor-002",
+  "senderName": "Maplewood Stationery",
+  "senderEmail": "billing@maplewood-stationery.in",
+  "subject": "Invoice #1023 for your recent order",
+  "bodyText": "Hello, please find your invoice #1023 attached for the office supplies delivered last week. Payment due in 30 days. Thank you for your business.",
+  "links": [{ "text": "View invoice", "url": "https://maplewood-stationery.in/invoices/1023" }],
+  "auth": { "spf": "unknown", "dkim": "unknown", "dmarc": "unknown", "aligned": null }
+}

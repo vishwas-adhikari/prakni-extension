@@ -1,0 +1,9 @@
+{
+  "id": "phish-it-001",
+  "senderName": "Income Tax Department",
+  "senderEmail": "notice@incometax-refund.in",
+  "subject": "Income Tax notice: action required",
+  "bodyText": "This is an Income Tax notice regarding a discrepancy in your return. Log in to verify your details within 24 hours or a penalty will apply.",
+  "links": [{ "text": "Resolve now", "url": "http://incometax-refund.in/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

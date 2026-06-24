@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-005",
+  "senderName": "Stripe",
+  "senderEmail": "payouts@stripe-payout-center.com",
+  "subject": "Action required: payout on hold",
+  "bodyText": "Your Stripe payout is on hold. Confirm your bank account details to release the funds to your account.",
+  "links": [{ "text": "Confirm details", "url": "http://stripe-payout-center.com/account/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

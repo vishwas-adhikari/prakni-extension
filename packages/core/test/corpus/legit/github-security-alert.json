@@ -1,0 +1,11 @@
+{
+  "id": "legit-github-001",
+  "senderName": "GitHub",
+  "senderEmail": "noreply@github.com",
+  "subject": "A new SSH key was added to your account",
+  "bodyText": "We noticed a new SSH key was added to your GitHub account. If this was you, no action is needed. If you don't recognize this activity, please review your security settings immediately.",
+  "links": [
+    { "text": "Review security settings", "url": "https://github.com/settings/keys" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

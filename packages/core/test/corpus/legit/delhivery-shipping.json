@@ -1,0 +1,9 @@
+{
+  "id": "legit-delhivery-001",
+  "senderName": "Delhivery",
+  "senderEmail": "updates@delhivery.com",
+  "subject": "Your shipment is on the way",
+  "bodyText": "Your package with waybill 28461234 is out for delivery and should arrive today between 2 and 6 PM.",
+  "links": [{ "text": "Track package", "url": "https://www.delhivery.com/track/28461234" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

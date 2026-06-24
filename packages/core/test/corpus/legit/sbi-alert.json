@@ -1,0 +1,9 @@
+{
+  "id": "legit-sbi-001",
+  "senderName": "State Bank of India",
+  "senderEmail": "alerts@sbi.co.in",
+  "subject": "Transaction alert on your account",
+  "bodyText": "Dear Customer, your account has been debited by Rs. 1,200 on 12 May 2026. If this was you, no action is needed.",
+  "links": [{ "text": "OnlineSBI", "url": "https://www.onlinesbi.sbi" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

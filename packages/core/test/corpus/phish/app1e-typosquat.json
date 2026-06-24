@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-005",
+  "senderName": "Apple",
+  "senderEmail": "appleid@app1e.com",
+  "subject": "Your Apple ID was used to sign in",
+  "bodyText": "Your Apple ID was used to sign in on a new device. If this was not you, verify your account to secure it.",
+  "links": [{ "text": "Verify Apple ID", "url": "http://app1e.com/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

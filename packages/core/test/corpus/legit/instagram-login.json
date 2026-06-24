@@ -1,0 +1,9 @@
+{
+  "id": "legit-instagram-001",
+  "senderName": "Instagram",
+  "senderEmail": "security@instagram.com",
+  "subject": "We noticed a new login",
+  "bodyText": "We noticed a login to your Instagram account from a new device. If this was you, no further action is needed.",
+  "links": [{ "text": "Secure account", "url": "https://www.instagram.com/accounts/security" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

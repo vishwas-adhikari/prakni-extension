@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-002",
+  "senderName": "Amazon Rewards",
+  "senderEmail": "rewards@amazon-customer-prize.com",
+  "subject": "You have won an Amazon reward",
+  "bodyText": "Congratulations! You have been selected for an Amazon reward. Claim your prize now before the offer expires.",
+  "links": [{ "text": "Claim prize", "url": "http://amazon-customer-prize.com/claim" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

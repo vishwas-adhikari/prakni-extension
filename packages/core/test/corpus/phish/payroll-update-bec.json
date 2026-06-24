@@ -1,0 +1,9 @@
+{
+  "id": "phish-misc-005",
+  "senderName": "HR Payroll",
+  "senderEmail": "payroll@hr-employee-portal.net",
+  "subject": "Update your direct deposit details",
+  "bodyText": "Payroll is being processed. Please update your bank account details before the cutoff so your salary is not delayed this month.",
+  "links": [{ "text": "Update details", "url": "http://hr-employee-portal.net/account/update" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

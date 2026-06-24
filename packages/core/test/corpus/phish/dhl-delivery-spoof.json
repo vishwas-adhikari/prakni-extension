@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-003",
+  "senderName": "DHL Express",
+  "senderEmail": "delivery@dhl-parcel-track.com",
+  "subject": "Your DHL parcel is held at customs",
+  "bodyText": "Your DHL parcel is held at customs pending a small fee. Pay the fee to release your package for delivery.",
+  "links": [{ "text": "Pay customs fee", "url": "http://91.214.44.10/dhl/pay" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

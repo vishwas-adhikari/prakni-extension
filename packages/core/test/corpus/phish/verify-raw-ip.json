@@ -1,0 +1,9 @@
+{
+  "id": "phish-rawip-001",
+  "senderName": "Account Security",
+  "senderEmail": "alerts@account-check.net",
+  "subject": "Verify your account to avoid suspension",
+  "bodyText": "We detected a problem with your account. Verify your identity within 24 hours or your access will be suspended.",
+  "links": [{ "text": "Verify identity", "url": "http://45.33.12.88/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

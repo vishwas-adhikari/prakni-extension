@@ -1,0 +1,11 @@
+{
+  "id": "legit-flipkart-001",
+  "senderName": "Flipkart",
+  "senderEmail": "promotions@flipkart.com",
+  "subject": "Big Saving Days start tomorrow",
+  "bodyText": "Get ready for Big Saving Days. Huge deals across electronics, fashion and home. Shop your favourites on Flipkart before they sell out.",
+  "links": [
+    { "text": "flipkart.com/deals", "url": "https://u1234.ct.sendgrid.net/ss/c/abcd/deals" }
+  ],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

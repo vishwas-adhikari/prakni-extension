@@ -1,0 +1,9 @@
+{
+  "id": "legit-netflix-001",
+  "senderName": "Netflix",
+  "senderEmail": "info@netflix.com",
+  "subject": "New device using your account",
+  "bodyText": "We noticed a new sign-in to your Netflix account on a Smart TV. If this was you, no action is needed.",
+  "links": [{ "text": "Manage devices", "url": "https://www.netflix.com/account" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

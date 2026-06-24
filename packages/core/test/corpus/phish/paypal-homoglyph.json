@@ -1,0 +1,11 @@
+{
+  "id": "phish-homoglyph-001",
+  "senderName": "PayPal",
+  "senderEmail": "security@paypa1.com",
+  "subject": "Action required on your PayPal account",
+  "bodyText": "We could not verify your recent PayPal payment. Please log in to your account immediately to confirm your details and avoid suspension.",
+  "links": [
+    { "text": "Log in to PayPal", "url": "http://paypa1.com/login" }
+  ],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

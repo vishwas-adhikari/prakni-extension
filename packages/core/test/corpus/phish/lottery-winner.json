@@ -1,0 +1,9 @@
+{
+  "id": "phish-misc-002",
+  "senderName": "Lucky Draw",
+  "senderEmail": "winners@global-lucky-draw.com",
+  "subject": "Your number won the draw",
+  "bodyText": "Your email was selected in our monthly draw. Claim your prize of Rs. 10,00,000 now by confirming your details through the link below.",
+  "links": [{ "text": "Claim winnings", "url": "https://bit.ly/claim-draw99" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

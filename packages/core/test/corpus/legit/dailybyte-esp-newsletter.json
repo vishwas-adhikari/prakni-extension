@@ -1,0 +1,12 @@
+{
+  "id": "legit-dailybyte-001",
+  "senderName": "The Daily Byte",
+  "senderEmail": "hello@thedailybyte-mail.com",
+  "subject": "This week in tech",
+  "bodyText": "Here are the five stories worth your time this week, plus a deep dive on edge computing. Thanks for reading The Daily Byte.",
+  "links": [
+    { "text": "thedailybyte.com/read", "url": "https://u987.ct.sendgrid.net/ss/c/xyz/read" },
+    { "text": "Manage subscription", "url": "https://u987.ct.sendgrid.net/ss/c/xyz/prefs" }
+  ],
+  "auth": { "spf": "unknown", "dkim": "unknown", "dmarc": "unknown", "aligned": null }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-github-pr-001",
+  "senderName": "GitHub",
+  "senderEmail": "notifications@github.com",
+  "subject": "[credmail/core] PR #42 was merged",
+  "bodyText": "Your pull request #42 'Add corroboration scorer' was merged into main by maintainer. View the discussion on GitHub.",
+  "links": [{ "text": "View pull request", "url": "https://github.com/credmail/core/pull/42" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

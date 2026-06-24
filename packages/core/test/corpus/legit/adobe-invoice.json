@@ -1,0 +1,9 @@
+{
+  "id": "legit-adobe-001",
+  "senderName": "Adobe",
+  "senderEmail": "message@adobe.com",
+  "subject": "Your Creative Cloud invoice",
+  "bodyText": "Your Adobe Creative Cloud subscription has renewed. Your invoice for this period is attached for your records.",
+  "links": [{ "text": "View account", "url": "https://account.adobe.com" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-zomato-001",
+  "senderName": "Zomato",
+  "senderEmail": "noreply@zomato.com",
+  "subject": "Your order is on the way",
+  "bodyText": "Your order from Punjabi Dhaba has been picked up and is on the way. Estimated arrival in 20 minutes.",
+  "links": [{ "text": "Track order", "url": "https://www.zomato.com/orders" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

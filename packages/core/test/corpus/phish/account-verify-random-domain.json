@@ -1,0 +1,9 @@
+{
+  "id": "phish-deceptive-002",
+  "senderName": "Billing Department",
+  "senderEmail": "billing@secure-billing-update.net",
+  "subject": "Payment method declined",
+  "bodyText": "Your last payment was declined. Update your bank account details to avoid service interruption.",
+  "links": [{ "text": "Update payment", "url": "http://secure-billing-update.net/account/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "phish-axis-kyc-001",
+  "senderName": "Axis Bank Support",
+  "senderEmail": "axisbank.support01@gmail.com",
+  "subject": "Urgent: Axis account verification",
+  "bodyText": "Dear customer, your Axis Bank account needs immediate verification. Confirm your details within 24 hours or your account will be suspended.",
+  "links": [{ "text": "Verify now", "url": "http://axis-verify-portal.in/secure/login" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

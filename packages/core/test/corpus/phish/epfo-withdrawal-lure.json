@@ -1,0 +1,9 @@
+{
+  "id": "phish-epfo-001",
+  "senderName": "EPFO",
+  "senderEmail": "claims@epfo-withdrawal.in",
+  "subject": "Your PF withdrawal is approved",
+  "bodyText": "Your EPF withdrawal of Rs. 2,40,000 is approved. Verify your account within 48 hours and claim your refund to receive the amount.",
+  "links": [{ "text": "Verify account", "url": "http://epfo-withdrawal.in/account/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

@@ -1,0 +1,8 @@
+{
+  "//": "[P1] placeholder — real config lands when the extension phase starts.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": []
+}

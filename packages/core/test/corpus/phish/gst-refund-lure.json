@@ -1,0 +1,9 @@
+{
+  "id": "phish-gst-001",
+  "senderName": "GST Refund Cell",
+  "senderEmail": "refunds@gst-refund-portal.in",
+  "subject": "Your GST refund is pending",
+  "bodyText": "Your GST refund of Rs. 18,400 is pending approval. Verify your details within 24 hours to claim your refund before it lapses.",
+  "links": [{ "text": "Claim refund", "url": "http://gst-refund-portal.in/verify-claim" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

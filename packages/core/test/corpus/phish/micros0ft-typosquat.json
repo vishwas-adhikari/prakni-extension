@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-002",
+  "senderName": "Microsoft",
+  "senderEmail": "security@micros0ft.com",
+  "subject": "Your Microsoft account needs attention",
+  "bodyText": "Unusual sign-in activity was detected on your Microsoft account. Secure your account now to prevent unauthorized access.",
+  "links": [{ "text": "Secure account", "url": "http://micros0ft.com/secure" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-icici-002",
+  "senderName": "ICICI Bank",
+  "senderEmail": "creditcards@icicibank.com",
+  "subject": "Your credit card statement is generated",
+  "bodyText": "Dear Cardmember, your ICICI Bank credit card statement is generated. Total amount due and minimum due are shown in the statement.",
+  "links": [{ "text": "View statement", "url": "https://www.icicibank.com/cards/statement" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

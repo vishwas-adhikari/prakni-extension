@@ -1,0 +1,9 @@
+{
+  "id": "legit-uber-001",
+  "senderName": "Uber Receipts",
+  "senderEmail": "noreply@uber.com",
+  "subject": "Your Tuesday morning trip with Uber",
+  "bodyText": "Thanks for riding. Your trip total was Rs. 248. We hope you enjoyed your ride.",
+  "links": [{ "text": "View receipt", "url": "https://riders.uber.com/trips" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

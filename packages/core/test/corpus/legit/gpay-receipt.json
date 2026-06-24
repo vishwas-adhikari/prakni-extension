@@ -1,0 +1,9 @@
+{
+  "id": "legit-gpay-001",
+  "senderName": "Google Pay",
+  "senderEmail": "googlepay-noreply@google.com",
+  "subject": "You paid Rs. 600",
+  "bodyText": "You sent Rs. 600 to Anita S. using Google Pay. This is a confirmation of your transaction.",
+  "links": [{ "text": "View in Google Pay", "url": "https://pay.google.com" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

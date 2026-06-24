@@ -1,0 +1,9 @@
+{
+  "id": "legit-hdfc-otp-001",
+  "senderName": "HDFC Bank",
+  "senderEmail": "otp@hdfcbank.com",
+  "subject": "OTP for your transaction",
+  "bodyText": "Your OTP is 738201. Do not share it with anyone. It is valid for 5 minutes. HDFC Bank never asks for your OTP.",
+  "links": [],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

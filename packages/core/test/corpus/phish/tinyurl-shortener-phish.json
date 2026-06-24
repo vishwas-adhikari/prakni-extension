@@ -1,0 +1,9 @@
+{
+  "id": "phish-shortener-002",
+  "senderName": "Delivery Notice",
+  "senderEmail": "notice@parcel-redelivery.net",
+  "subject": "Your parcel could not be delivered",
+  "bodyText": "Your parcel could not be delivered. Reschedule within 24 hours or it will be returned to sender. Use the link to confirm your address.",
+  "links": [{ "text": "Reschedule", "url": "https://tinyurl.com/redeliver99" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

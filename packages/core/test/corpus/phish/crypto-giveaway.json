@@ -1,0 +1,9 @@
+{
+  "id": "phish-misc-001",
+  "senderName": "Crypto Rewards",
+  "senderEmail": "promo@crypto-airdrop-claim.net",
+  "subject": "Claim your free Bitcoin airdrop",
+  "bodyText": "A Bitcoin airdrop has been reserved for you. Verify your wallet within 24 hours to claim your crypto before it is released to someone else.",
+  "links": [{ "text": "Claim airdrop", "url": "http://crypto-airdrop-claim.net/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

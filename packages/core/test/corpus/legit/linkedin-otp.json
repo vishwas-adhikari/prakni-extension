@@ -1,0 +1,9 @@
+{
+  "id": "legit-linkedin-001",
+  "senderName": "LinkedIn",
+  "senderEmail": "security-noreply@linkedin.com",
+  "subject": "Your LinkedIn verification code",
+  "bodyText": "Please use this code to verify your email address: 304512. This code expires in 15 minutes.",
+  "links": [{ "text": "LinkedIn Help", "url": "https://www.linkedin.com/help" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

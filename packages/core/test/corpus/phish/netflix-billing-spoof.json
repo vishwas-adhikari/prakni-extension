@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-001",
+  "senderName": "Netflix",
+  "senderEmail": "billing@netflix-account-update.com",
+  "subject": "Your Netflix membership is on hold",
+  "bodyText": "We're having trouble with your current billing information. Update your payment details to restart your Netflix membership.",
+  "links": [{ "text": "https://www.netflix.com/account", "url": "http://netflix-account-update.com/account" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

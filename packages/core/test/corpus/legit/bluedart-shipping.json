@@ -1,0 +1,9 @@
+{
+  "id": "legit-bluedart-001",
+  "senderName": "Blue Dart",
+  "senderEmail": "tracking@bluedart.com",
+  "subject": "Delivery scheduled for tomorrow",
+  "bodyText": "Your Blue Dart shipment is scheduled for delivery tomorrow. Please ensure someone is available to receive it.",
+  "links": [{ "text": "Track shipment", "url": "https://www.bluedart.com/tracking" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

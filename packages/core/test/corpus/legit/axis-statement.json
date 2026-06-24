@@ -1,0 +1,9 @@
+{
+  "id": "legit-axis-001",
+  "senderName": "Axis Bank",
+  "senderEmail": "estatement@axisbank.com",
+  "subject": "Your credit card statement",
+  "bodyText": "Dear Cardmember, your Axis Bank credit card statement for the cycle ending 5 May 2026 is attached. Total due is shown inside.",
+  "links": [{ "text": "Pay online", "url": "https://www.axisbank.com/cards" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

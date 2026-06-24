@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-006",
+  "senderName": "GitHub",
+  "senderEmail": "security@github-alerts.net",
+  "subject": "Suspicious sign-in to your GitHub account",
+  "bodyText": "We detected a suspicious sign-in to your GitHub account. Verify it was you to keep your repositories secure.",
+  "links": [{ "text": "https://github.com/settings", "url": "http://github-alerts.net/verify" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

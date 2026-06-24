@@ -1,0 +1,9 @@
+{
+  "id": "legit-aws-001",
+  "senderName": "AWS Billing",
+  "senderEmail": "no-reply@amazonaws.com",
+  "subject": "Your AWS invoice is available",
+  "bodyText": "Your AWS invoice for May 2026 is now available. Your estimated charges were USD 142.18. You can view the breakdown in the Billing console.",
+  "links": [{ "text": "Billing console", "url": "https://console.aws.amazon.com/billing" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

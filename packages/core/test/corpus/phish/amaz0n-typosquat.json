@@ -1,0 +1,9 @@
+{
+  "id": "phish-typo-003",
+  "senderName": "Amazon",
+  "senderEmail": "orders@amaz0n.in",
+  "subject": "There is a problem with your order",
+  "bodyText": "There was a problem processing your recent Amazon order. Update your payment details to avoid cancellation.",
+  "links": [{ "text": "Update details", "url": "http://amaz0n.in/account/update" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

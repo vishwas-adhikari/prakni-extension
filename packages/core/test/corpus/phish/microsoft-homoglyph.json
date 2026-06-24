@@ -1,0 +1,11 @@
+{
+  "id": "phish-microsoft-001",
+  "senderName": "Microsoft Account Team",
+  "senderEmail": "account-security@micros0ft-support.com",
+  "subject": "Unusual sign-in activity on your Microsoft account",
+  "bodyText": "We detected an unusual sign-in to your Microsoft account. Please verify your account to confirm it was you. If you do not act now, your account will be locked.",
+  "links": [
+    { "text": "https://account.microsoft.com/security", "url": "http://micros0ft-support.com/verify" }
+  ],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "legit-github-bitly-001",
+  "senderName": "GitHub",
+  "senderEmail": "newsletter@github.com",
+  "subject": "What's new this month on GitHub",
+  "bodyText": "Highlights this month: faster Actions, new code search, and a community spotlight. Read the full roundup on our blog.",
+  "links": [{ "text": "Read the roundup", "url": "https://bit.ly/gh-roundup-may" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

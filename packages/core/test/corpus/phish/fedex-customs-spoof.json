@@ -1,0 +1,9 @@
+{
+  "id": "phish-misc-004",
+  "senderName": "FedEx",
+  "senderEmail": "customs@fedex-clearance-fee.com",
+  "subject": "FedEx: customs clearance required",
+  "bodyText": "Your FedEx shipment is held pending a customs clearance fee. Pay now to avoid your package being returned to sender.",
+  "links": [{ "text": "Pay clearance fee", "url": "http://185.62.190.5/fedex/clearance" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}

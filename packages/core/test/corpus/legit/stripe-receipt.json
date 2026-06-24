@@ -1,0 +1,9 @@
+{
+  "id": "legit-stripe-001",
+  "senderName": "Stripe",
+  "senderEmail": "receipts@stripe.com",
+  "subject": "Your receipt from Acme Inc.",
+  "bodyText": "Thanks for your payment. Your receipt for USD 29.00 is attached. This charge will appear on your statement as ACME.",
+  "links": [{ "text": "View receipt", "url": "https://dashboard.stripe.com/receipts" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

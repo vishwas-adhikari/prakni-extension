@@ -1,0 +1,9 @@
+{
+  "id": "legit-binance-001",
+  "senderName": "Binance",
+  "senderEmail": "do-not-reply@binance.com",
+  "subject": "Verify your withdrawal",
+  "bodyText": "You requested a withdrawal. Please confirm it within 30 minutes or it will be cancelled for your security. If you did not request this, secure your account now.",
+  "links": [{ "text": "Confirm withdrawal", "url": "https://www.binance.com/withdraw/confirm" }],
+  "auth": { "spf": "pass", "dkim": "pass", "dmarc": "pass", "aligned": true }
+}

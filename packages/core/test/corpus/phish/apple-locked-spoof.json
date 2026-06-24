@@ -1,0 +1,9 @@
+{
+  "id": "phish-brand-008",
+  "senderName": "Apple Support",
+  "senderEmail": "support@apple-id-locked.com",
+  "subject": "Your Apple ID has been locked",
+  "bodyText": "Your Apple ID has been locked due to suspicious activity. Unlock it within 24 hours to prevent permanent deactivation.",
+  "links": [{ "text": "https://appleid.apple.com", "url": "http://apple-id-locked.com/unlock" }],
+  "auth": { "spf": "fail", "dkim": "fail", "dmarc": "fail", "aligned": false }
+}
