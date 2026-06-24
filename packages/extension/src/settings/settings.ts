@@ -1,2 +1,2 @@
-// [P1] placeholder — settings page logic. Implemented when the extension phase starts.
-export {};
+// [P1] Settings page logic. Pipeline scaffold only — real UI lands later.
+console.log('[CredMail] settings loaded');

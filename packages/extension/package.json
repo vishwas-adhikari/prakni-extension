@@ -2,9 +2,21 @@
   "name": "@credmail/extension",
   "version": "0.0.0",
   "private": true,
-  "description": "[P1 placeholder] Cred Mail browser extension. Implemented when the extension phase starts.",
+  "description": "Cred Mail browser extension — Chromium + Gmail (P1).",
   "license": "UNLICENSED",
+  "scripts": {
+    "build": "webpack"
+  },
   "dependencies": {
-    "@credmail/core": "*"
+    "@credmail/core": "*",
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.2.0",
+    "@types/webextension-polyfill": "^0.12.5",
+    "copy-webpack-plugin": "^14.0.0",
+    "ts-loader": "^9.6.2",
+    "webpack": "^5.107.2",
+    "webpack-cli": "^7.0.3"
   }
 }

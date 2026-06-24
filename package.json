@@ -10,7 +10,8 @@
   "scripts": {
     "test": "jest",
     "harness": "ts-node packages/core/test/corpus/harness.ts",
-    "build": "tsc -p packages/core/tsconfig.json --noEmit"
+    "typecheck": "tsc -p packages/core/tsconfig.json --noEmit",
+    "build": "npm run build -w @credmail/extension"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

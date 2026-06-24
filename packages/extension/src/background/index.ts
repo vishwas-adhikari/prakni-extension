@@ -1,2 +1,2 @@
-// [P1] placeholder — MV3 service worker entry. Implemented when the extension phase starts.
-export {};
+// [P1] MV3 service worker entry. Pipeline scaffold only — real handlers land later.
+console.log('[CredMail] background alive');

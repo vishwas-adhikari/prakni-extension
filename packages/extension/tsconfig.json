@@ -1,8 +1,10 @@
 {
-  "//": "[P1] placeholder — real config lands when the extension phase starts.",
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "noEmit": true
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["chrome", "webextension-polyfill"],
+    "declaration": false,
+    "sourceMap": true
   },
-  "include": []
+  "include": ["src/**/*.ts"]
 }
