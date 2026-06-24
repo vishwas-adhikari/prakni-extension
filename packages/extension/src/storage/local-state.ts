@@ -1,2 +1,98 @@
-// [P1] placeholder — chrome.storage.local state. Implemented when the extension phase starts.
-export {};
+// [P1] Typed async wrapper around chrome.storage.local.
+//
+// Hard rule (MV3): chrome.storage.local is asynchronous. Every export here returns a
+// Promise and awaits the underlying API — there are no synchronous getters. The service
+// worker may sleep at any time, so state lives here, never in worker globals.
+
+import type { LocalState, ScoringConfig } from '@credmail/core';
+
+// Bootstrap fallback for the scorer thresholds before any OTA config is delivered.
+// Mirrors core's DEFAULT_CONFIG; OTA + the core scorer remain the real source of truth.
+const DEFAULT_SCORING_CONFIG: ScoringConfig = {
+  suspiciousThreshold: 30,
+  highRiskThreshold: 70,
+  weakCorroborationNeeded: 2,
+};
+
+const DEFAULTS: LocalState = {
+  user_tier: 'free',
+  auth_token: null,
+  is_active: true,
+  local_whitelist: [],
+  local_blocklist: [],
+  dom_selectors: {}, // populated by the first OTA sync
+  scoring_config: DEFAULT_SCORING_CONFIG,
+};
+
+/** Domains/senders are case-insensitive — normalize before storing or comparing. */
+function normalize(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+/**
+ * Persist any missing keys with their defaults without clobbering existing user data.
+ * Idempotent — safe to call on every install/update.
+ */
+export async function initState(): Promise<void> {
+  const stored = await chrome.storage.local.get(null);
+  await chrome.storage.local.set({ ...DEFAULTS, ...stored });
+}
+
+/** Full state, with defaults filled in for any key not yet persisted. */
+export async function getState(): Promise<LocalState> {
+  const stored = await chrome.storage.local.get(
+    DEFAULTS as unknown as Record<string, unknown>,
+  );
+  return stored as unknown as LocalState;
+}
+
+/** Shallow-merge a partial update into stored state. */
+export async function setState(partial: Partial<LocalState>): Promise<void> {
+  await chrome.storage.local.set(partial);
+}
+
+export async function getWhitelist(): Promise<string[]> {
+  return (await getState()).local_whitelist;
+}
+
+export async function addToWhitelist(domain: string): Promise<void> {
+  const list = await getWhitelist();
+  const next = Array.from(new Set([...list, normalize(domain)]));
+  await setState({ local_whitelist: next });
+}
+
+export async function removeFromWhitelist(domain: string): Promise<void> {
+  const target = normalize(domain);
+  const list = await getWhitelist();
+  await setState({ local_whitelist: list.filter((d) => d !== target) });
+}
+
+export async function getBlocklist(): Promise<string[]> {
+  return (await getState()).local_blocklist;
+}
+
+export async function addToBlocklist(sender: string): Promise<void> {
+  const list = await getBlocklist();
+  const next = Array.from(new Set([...list, normalize(sender)]));
+  await setState({ local_blocklist: next });
+}
+
+export async function removeFromBlocklist(sender: string): Promise<void> {
+  const target = normalize(sender);
+  const list = await getBlocklist();
+  await setState({ local_blocklist: list.filter((s) => s !== target) });
+}
+
+/**
+ * Cached OTA selectors. Flat field → selector[] map for the single (Gmail) provider in
+ * P1; provider nesting arrives with the P3 multi-provider schema migration.
+ */
+export async function getDomSelectors(): Promise<Record<string, string[]>> {
+  return (await getState()).dom_selectors;
+}
+
+export async function setDomSelectors(
+  selectors: Record<string, string[]>,
+): Promise<void> {
+  await setState({ dom_selectors: selectors });
+}
