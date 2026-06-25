@@ -1,5 +1,5 @@
 {
-  "sender": ["[email]", ".gD", "span[email]", "h3.iw span[email]"],
+  "sender": [".gD", ".go span[email]", "span.gD[email]", "h3.iw span[email]"],
   "subject": ["h2.hP", ".ha h2", "[data-thread-perm-id] h2"],
   "body": [".a3s", ".ii.gt", "div[data-message-id] .a3s"],
   "links": [".a3s a[href]", ".ii.gt a[href]"]
