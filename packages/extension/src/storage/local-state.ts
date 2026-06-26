@@ -88,11 +88,13 @@ export async function removeFromBlocklist(sender: string): Promise<void> {
  * P1; provider nesting arrives with the P3 multi-provider schema migration.
  */
 export async function getDomSelectors(): Promise<Record<string, string[]>> {
-  return (await getState()).dom_selectors;
+  // dom_selectors holds mixed OTA config (string[] for engine selectors, an object
+  // for `row`); engine consumers only read the string[] keys, so narrow here.
+  return (await getState()).dom_selectors as Record<string, string[]>;
 }
 
 export async function setDomSelectors(
-  selectors: Record<string, string[]>,
+  selectors: Record<string, unknown>,
 ): Promise<void> {
   await setState({ dom_selectors: selectors });
 }

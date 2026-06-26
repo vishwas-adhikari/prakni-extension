@@ -89,3 +89,35 @@ startObserver(async (messageId, container) => {
 });
 
 console.log('[CredMail] gmail content script loaded');
+
+// --- Inbox row scanner (ISOLATED, disposable) -------------------------------
+// A SEPARATE system from the open-email pipeline above — its own observer, no shared
+// state, no core. Delete this block + row-scanner.ts to remove it entirely; nothing
+// above depends on it. (Import sits here, not at the top, to keep it one deletable unit.)
+import { scanInboxRows } from './row-scanner';
+
+const ROW_SCAN_DEBOUNCE_MS = 800;
+const MESSAGE_ID_MIN_LEN = 20;
+
+/** True for list views (#inbox, #label/X, #search/q); false for an open message,
+ * whose hash ends in a long thread-id segment (#inbox/FMfcgz...). */
+function isInboxView(): boolean {
+  const segments = location.hash.replace(/^#/, '').split('/').filter(Boolean);
+  if (segments.length === 0) return true;
+  return segments[segments.length - 1].length <= MESSAGE_ID_MIN_LEN;
+}
+
+let rowScanTimer: number | undefined;
+new MutationObserver(() => {
+  if (rowScanTimer !== undefined) clearTimeout(rowScanTimer);
+  rowScanTimer = window.setTimeout(async () => {
+    console.log('[CredMail] Row observer fired, hash:', location.hash, 'isInbox:', isInboxView());
+    try {
+      const { is_active } = await chrome.storage.local.get({ is_active: true });
+      console.log('[CredMail] is_active:', is_active);
+      if (is_active && isInboxView()) await scanInboxRows();
+    } catch {
+      /* row scan is best-effort — never crash the observer */
+    }
+  }, ROW_SCAN_DEBOUNCE_MS);
+}).observe(document.body, { childList: true, subtree: true });

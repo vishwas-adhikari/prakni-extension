@@ -2,5 +2,12 @@
   "sender": [".gD", ".go span[email]", "span.gD[email]", "h3.iw span[email]"],
   "subject": ["h2.hP", ".ha h2", "[data-thread-perm-id] h2"],
   "body": [".a3s", ".ii.gt", "div[data-message-id] .a3s"],
-  "links": [".a3s a[href]", ".ii.gt a[href]"]
+  "links": [".a3s a[href]", ".ii.gt a[href]"],
+  "row": {
+    "container": ".zA",
+    "senderName": [".yX", ".zF", ".bA4", "span[email]"],
+    "senderEmail": ["email", "data-hovercard-id"],
+    "subject": [".bog", ".bqe", ".y6 span"],
+    "threadIdAttrs": ["id", "data-legacy-thread-id"]
+  }
 }

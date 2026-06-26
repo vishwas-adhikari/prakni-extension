@@ -181,3 +181,133 @@ Phase 1 is underway and on-rails: the MV3 build pipeline works, the extension lo
 background layer (sleep-safe storage, 12-hour OTA selector sync, metadata-only telemetry) is built
 within the hard rules. The next milestone is the Gmail adapter that finally feeds real mail into the
 Phase 0 brain.
+
+---
+
+# Addendum — work log after the report above (2026-06-26)
+
+> Everything above this line predates the work below and is left untouched. The sub-phase table in
+> §2 (P1.3 "next", P1.4/P1.5 "pending") is now **out of date** — see this addendum for the real
+> status. This section is an honest running log of what got built across three working sessions,
+> **including the mistakes** (called out as ⚠️ **Fuckup** so they're not quietly buried).
+
+## A1. P1.3 — Gmail adapter shipped, then the "Safe(0)" bug
+
+P1.3 (Gmail adapter, DOM extraction, verdict logging) was committed (`23556d5`). On live Gmail it
+mis-fired: legitimate-looking and phishing mail alike came back **`Safe (0)`**. Two root causes,
+found by diffing against an older working prototype:
+
+**Fix 1 — freemail domains were in the trust list.** `data/trusted-domains.json` contained
+open-registration webmail domains (`gmail.com`, `outlook.com`, `live.com`, `icloud.com`). The Sender
+Trust Gate does an exact registrable-domain match, so **any** sender mis-read as a gmail address
+cleared the gate → `Safe (0)`. Anyone can send from `gmail.com`; trusting it defeats the gate.
+- Removed those 4 from `trusted-domains.json` (only 4 of the 18 candidates were actually present).
+- Expanded `data/free-email-providers.json` to the full 18-domain list. This file is consumed
+  **only** by the `sender-name-spoof` rule (a brand name + a freemail address = spoof), never by the
+  gate.
+
+**Fix 2 — sender extraction.** The sender lives in Gmail's message **header**, above/outside the
+`.a3s` body container, so a body-scoped lookup can never find it. Reworked `parser.ts`:
+- Sender now resolves at **document level with an open-message hint** — prefer the message wrapper
+  that owns the body, then fall back to document level (so a busy multi-message thread still
+  resolves to a real sender instead of the first `[email]` on the page).
+- `emailFromEl` reads `email`, then `data-hovercard-id` (validated as email-shaped), then text.
+- Heuristic fallback scans the header areas (`.ha`, `.ade`) instead of the old sidebar-coordinate
+  scan (`SIDEBAR_MAX_X` removed).
+- `gmail-selectors.json` sender list reordered to `[".gD", ".go span[email]", "span.gD[email]",
+  "h3.iw span[email]"]` — `.gD` (the sender-specific class) now leads, and the generic `[email]`
+  that used to win first-match (often grabbing a **recipient**) was dropped.
+
+**Evidence:** `npm run harness` → **FP 0/50 (0.0%)**, **catch 49/49 (100%)**, precision proof stayed
+Safe, `P0 exit criterion: PASS`. `npm run build` green.
+
+⚠️ **Fuckup (mine).** My first self-audit of this fix was too clean — it implied selectors were
+fully OTA-driven with nothing hardcoded. When challenged, the truth: Layer-1 element *location*
+(`.gD`, …) is OTA-driven, but the **attribute names** read off the element (`email`,
+`data-hovercard-id`, `name`) are **hardcoded in `parser.ts`** and therefore **cannot self-heal via
+OTA** — a Gmail attribute rename would need a code change + store re-review, the exact failure the
+OTA system exists to prevent. The OTA schema (`Record<string,string[]>`, field → selector list) has
+nowhere to express "which attribute to read." Decision: **left as-is** (low-risk, consistent with
+pre-existing `email`/`name` reads); logged as a separate future task. Layer-2 heuristic constants
+(`.ha/.ade`, `h1,h2,h3`, etc.) are legitimately hardcoded — heuristics are code by design.
+
+## A2. P1.4 — UI components (built standalone, not yet wired)
+
+Built the four files, UI only, with **zero** changes to the detection pipeline:
+- `src/ui/styles.ts` — `StyleMap` style objects (banner base + Suspicious/High-Risk colours, header,
+  reasons, buttons, footer, pill base + variants) and a **local** `VerdictView` interface
+  (deliberately *not* imported from `@credmail/core`, to keep the UI self-contained).
+- `src/ui/banner.ts` — `injectBanner(verdict, container, senderEmail, onMarkSafe)`: idempotent,
+  silent-clears on Safe, reasons list, query-stripped + truncated affected links, Mark Safe / Report
+  buttons, "🔒 Local analysis" footer, inserted as first child.
+- `src/ui/pill.ts` — `injectPill(verdict, subjectElement)`: idempotent, silent-clears,
+  `insertAdjacentElement('afterend', …)`.
+- `src/adapters/shared/extract-links.ts` — **Google redirect unwrapping** (`google.com/url?q=…` →
+  real URL, in try/catch), `<area href>` image-map links, and Set-based dedupe on the final URL.
+  Without the unwrap, every Gmail link looks like `google.com` and the link-mismatch rules go blind.
+
+**Three CSP traps honored** (MV3): (A) all styling via `Object.assign(el.style, {...})` — no CSS
+strings / `<style>` / `classList`; (B) every node via `createElement` + `textContent` — no
+`innerHTML`; (C) all style keys camelCase.
+
+⚠️ **Fuckup avoided (caught before claiming done).** `npm run build` **does not validate the UI
+files when nothing imports them** — webpack/ts-loader only compile what's reachable from an entry,
+and the UI was intentionally unwired. A build-only "green" would have been a false pass. Added
+`npx tsc -p packages/extension/tsconfig.json --noEmit` (includes `src/**/*.ts`) as the real
+compile check. Both green.
+
+**Assumptions recorded:** Report button logs the first `affectedLinks` entry (the spec's `url` was
+singular but a banner has many links); affected links truncated to ~60 chars.
+
+## A3. P1.4/P1.5 — cache adjustment + full UI wiring into `index.ts`
+
+This is the file with **"RULES FROM LAST TIME'S FAILURE"** attached — a prior session had refactored
+`index.ts` / changed the cache structure / altered the observer flow when it shouldn't have. This
+time the change was tightly scoped and pre-approved.
+
+- **Cache:** `Map<string, Verdict>` → `Map<string, { verdict: Verdict; senderEmail: string }>`.
+  Stores **only** verdict + sender — explicitly **not** `emailData` or `container`.
+- **Wiring:** `injectBanner` **and** `injectPill` now render on both the cache-miss and cache-hit
+  paths. Core's `Verdict` is structurally a `VerdictView`, so it passes straight through (tsc
+  confirmed, no cast).
+- **Mark Safe (`onMarkSafe`):** whitelist the sender domain → **re-extract fresh** from the live DOM
+  via `parser.extract` (never a cached `emailData`) → re-score → update cache → re-render (now
+  Safe/silent, so banner + pill clear). If `extract()` returns `null`, **log a warning and skip —
+  no crash.**
+
+**Decisions flagged at the time (implied but not spelled out in the request):**
+- Added `addToWhitelist(domain)` inside `onMarkSafe`. Without it the re-score is identical and the
+  banner never clears — verified `core/trust/whitelist.ts` matches by domain, so whitelisting the
+  domain clears the gate.
+- The **pill attaches to the reading-pane subject** (`h2.hP`). True inbox-list-row pilling
+  (`docs/design.md`) is still a separate concern.
+
+⚠️ **Known edge case (left as-is, flagged not fixed).** The **cache-hit path does not re-check
+`is_active`** — it matches the original early-return-on-hit structure (no `getState` on hits). So if
+a user pauses protection and *reopens* an already-scored email, the cached banner still renders. A
+one-line `is_active` guard on the hit path would close it if we decide it matters.
+
+⚠️ **Process note.** Twice now the safe move was to **stop and ask before editing `index.ts`** rather
+than guess scope — the cache/wiring task was genuinely ambiguous about how much UI to wire, and the
+file's history made a wrong guess expensive. Asking first (cache-only vs. banner vs. banner+pill)
+was the right call both times.
+
+## A4. Verification at end of these sessions
+
+- `npm run harness` → FP 0/50, catch 49/49 (detection unchanged by UI/cache work — corpus fixtures
+  supply links directly, so `extract-links.ts` isn't exercised by the harness).
+- `npm run build` → green; UI files now bundled into `content_gmail`.
+- `npx tsc -p packages/extension/tsconfig.json --noEmit` → exit 0.
+- `git status` kept to exactly the intended files each session; no observer/core/settings drift.
+
+## A5. Real status vs. the §2 table
+
+| Sub-phase | §2 said | Actually now |
+| :-- | :-- | :-- |
+| **P1.3** Gmail adapter | "next" | ✅ shipped + Safe(0) bug fixed |
+| **P1.4** Banner + pill UI | "pending" | ✅ components built **and** wired into `index.ts` |
+| **P1.5** Settings; Report / Mark-Safe loop | "pending" | 🟡 partial — Mark Safe (whitelist + re-score) wired; Report is a `console.log` stub; settings page still a stub |
+
+**Still open:** Report intake call (currently logs only); settings page wiring; inbox-list-row pill;
+the OTA attribute-name gap (A1); optional `is_active` guard on cache hit (A3); committing the
+currently-uncommitted working-tree changes.
