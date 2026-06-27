@@ -34,17 +34,29 @@ const BRAND_PATTERNS = Object.keys(brands as Record<string, string>).map(
   (b) => new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
 );
 
-const ROW_PILL_STYLE: Record<string, string> = {
+// Shared pill layout; colour/text vary by which check fired.
+const ROW_PILL_BASE: Record<string, string> = {
   display: 'inline-block',
   fontSize: '11px',
-  background: '#FFF7ED',
-  color: '#7C2D12',
-  border: '1px solid #ED6C02',
   borderRadius: '10px',
   padding: '1px 6px',
   marginLeft: '6px',
   fontWeight: '600',
   verticalAlign: 'middle',
+};
+
+type PillKind = 'reported' | 'suspicious';
+const ROW_PILL_VARIANTS: Record<PillKind, { text: string; style: Record<string, string> }> = {
+  // Blocklist hit — the user's explicit flag; takes priority over a heuristic spoof.
+  reported: {
+    text: '🚩 Reported',
+    style: { background: '#FEE2E2', color: '#991B1B', border: '1px solid #DC2626' },
+  },
+  // Brand-spoof heuristic (sender name or subject).
+  suspicious: {
+    text: '⚠ Suspicious',
+    style: { background: '#FFF7ED', color: '#7C2D12', border: '1px solid #ED6C02' },
+  },
 };
 
 /** True if any known brand keyword appears in `text` (word-boundary match). */
@@ -97,13 +109,14 @@ function firstEl(row: Element, selectors: string[]): Element | null {
   return null;
 }
 
-/** Insert the suspicious pill after `subjectEl`, replacing any existing row pill. */
-function injectRowPill(row: Element, subjectEl: Element): void {
+/** Insert a row pill (of `kind`) after `subjectEl`, replacing any existing row pill. */
+function injectRowPill(row: Element, subjectEl: Element, kind: PillKind): void {
   row.querySelectorAll(`[${ROW_PILL}]`).forEach((el) => el.remove()); // never stack
+  const variant = ROW_PILL_VARIANTS[kind];
   const pill = document.createElement('span');
   pill.setAttribute(ROW_PILL, '');
-  Object.assign(pill.style, ROW_PILL_STYLE);
-  pill.textContent = '⚠ Suspicious';
+  Object.assign(pill.style, ROW_PILL_BASE, variant.style);
+  pill.textContent = variant.text;
   subjectEl.insertAdjacentElement('afterend', pill);
 }
 
@@ -148,10 +161,8 @@ export async function scanInboxRows(): Promise<void> {
       const subject = subjectEl ? (subjectEl.textContent ?? '').trim() : '';
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
 
-      const triggered =
-        blocklist.has(senderEmail.toLowerCase()) ||
-        (isFreemail && mentionsBrand(senderName)) ||
-        (isFreemail && mentionsBrand(subject));
+      const isReported = blocklist.has(senderEmail.toLowerCase());
+      const isSpoof = isFreemail && (mentionsBrand(senderName) || mentionsBrand(subject));
 
       console.log('[CredMail] DEBUG row', {
         senderEmail,
@@ -160,10 +171,14 @@ export async function scanInboxRows(): Promise<void> {
         domain: domainOf(senderEmail),
         isFreemail,
         hasSubjectEl: !!subjectEl,
-        triggered,
+        isReported,
+        isSpoof,
       });
 
-      if (triggered && subjectEl) injectRowPill(row, subjectEl);
+      // Blocklist (the user's explicit flag) wins over the heuristic spoof pill.
+      if ((isReported || isSpoof) && subjectEl) {
+        injectRowPill(row, subjectEl, isReported ? 'reported' : 'suspicious');
+      }
 
       row.setAttribute(ROW_MARK, threadId); // mark only after a real scan
     }

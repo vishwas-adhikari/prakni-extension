@@ -12,6 +12,11 @@ import {
   addToBlocklist,
   removeFromBlocklist,
 } from '../storage/local-state';
+import freeProviders from '../../../../data/free-email-providers.json';
+
+// Freemail providers must never be "trusted" — doing so would clear the gate for every
+// sender on that domain. Checked when adding a trusted domain.
+const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerCase()));
 
 const VERSION = chrome.runtime.getManifest().version;
 
@@ -76,6 +81,8 @@ function listSection(opts: {
   placeholder: string;
   validate: (v: string) => boolean;
   invalidText: string;
+  // Extra gate after basic validation; return an error message to show (and reject), or null.
+  extraReject?: (v: string) => string | null;
   load: () => Promise<string[]>;
   add: (v: string) => Promise<void>;
   remove: (v: string) => Promise<void>;
@@ -160,6 +167,15 @@ function listSection(opts: {
     }
   };
 
+  // A small, self-dismissing red note below the add row (no alert()).
+  const showTransientError = (msg: string): void => {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    Object.assign(div.style, { color: '#DC2626', fontSize: '12px', marginTop: '4px' });
+    card.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  };
+
   const submit = async (): Promise<void> => {
     const value = input.value.trim();
     if (!value) return;
@@ -168,6 +184,12 @@ function listSection(opts: {
       return;
     }
     error.textContent = '';
+    const rejection = opts.extraReject?.(value) ?? null;
+    if (rejection) {
+      input.value = '';
+      showTransientError(rejection);
+      return;
+    }
     input.value = '';
     await opts.add(value);
     await rebuild();
@@ -432,14 +454,18 @@ async function render(): Promise<void> {
     placeholder: 'example.com',
     invalidText: 'Enter a valid domain (e.g. example.com) — no spaces or http://',
     validate: (v) => v.includes('.') && !/\s/.test(v) && !v.toLowerCase().includes('http://'),
+    extraReject: (v) =>
+      FREE_PROVIDERS.has(v.toLowerCase())
+        ? 'Cannot trust public email providers like gmail.com — this would disable protection for all emails from this domain.'
+        : null,
     load: getWhitelist,
     add: addToWhitelist,
     remove: removeFromWhitelist,
   });
 
   const blockedCard = listSection({
-    title: 'Blocked Senders',
-    emptyText: 'No blocked senders',
+    title: 'Reported Senders',
+    emptyText: 'No reported senders yet',
     placeholder: 'sender@example.com',
     invalidText: 'Enter a valid email address (must contain @)',
     validate: (v) => v.includes('@') && !/\s/.test(v),
