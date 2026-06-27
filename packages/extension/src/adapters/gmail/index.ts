@@ -18,6 +18,16 @@ import { injectPill } from '../../ui/pill';
 // WITHOUT re-extracting; everything else (emailData, container) is re-derived live.
 const verdictCache = new Map<string, { verdict: Verdict; senderEmail: string }>();
 
+/** Bump a this-session counter in chrome.storage.local (read-modify-write). */
+async function incrementStat(key: 'scanned' | 'detected' | 'markedSafe'): Promise<void> {
+  const stored = await chrome.storage.local.get({
+    session_stats: { scanned: 0, detected: 0, markedSafe: 0 },
+  });
+  const session_stats = stored.session_stats as { scanned: number; detected: number; markedSafe: number };
+  session_stats[key] += 1;
+  await chrome.storage.local.set({ session_stats });
+}
+
 /** The reading-pane subject element (OTA subject selectors), for the pill. */
 async function findSubjectElement(): Promise<HTMLElement | null> {
   const selectors = await getDomSelectors();
@@ -52,6 +62,7 @@ startObserver(async (messageId, container) => {
   // accurate. A failed extraction is logged and skipped, never thrown.
   const onMarkSafe = async (domain: string): Promise<void> => {
     if (domain) await addToWhitelist(domain);
+    await incrementStat('markedSafe');
     const fresh = await extract(container, messageId);
     if (!fresh) {
       console.warn(
@@ -85,6 +96,11 @@ startObserver(async (messageId, container) => {
   console.log(
     `[CredMail] Verdict for ${messageId}: ${verdict.riskLevel} (${verdict.score})`,
   );
+  // Stats: cache MISS only, so reopening an email never double-counts.
+  await incrementStat('scanned');
+  if (verdict.riskLevel === 'Suspicious' || verdict.riskLevel === 'High Risk') {
+    await incrementStat('detected');
+  }
   await render(verdict, container, emailData.senderEmail, onMarkSafe);
 });
 
@@ -111,6 +127,10 @@ function isInboxView(): boolean {
  * attributes hadn't been populated yet on the first pass (Gmail fills them in after
  * the row renders, and no childList mutation fires for that attribute change). */
 async function scanWithRetry(): Promise<void> {
+  // Inbox-row scanning is independently toggleable (default on) — when off, the
+  // main email-open protection still runs; only row pills stop.
+  const { scan_inbox_rows = true } = await chrome.storage.local.get({ scan_inbox_rows: true });
+  if (!scan_inbox_rows) return;
   await scanInboxRows();
   setTimeout(async () => {
     try {
@@ -161,3 +181,18 @@ setTimeout(async () => {
     /* best effort */
   }
 }, 2000);
+
+// Live sync: a protection toggle in the popup/dashboard flips `is_active` in storage —
+// reflect it in the open Gmail tab instantly, no refresh.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local' || !changes.is_active) return;
+  if (changes.is_active.newValue === false) {
+    document.querySelectorAll('[data-credmail-banner]').forEach((el) => el.remove());
+    document.querySelectorAll('[data-credmail-pill]').forEach((el) => el.remove());
+    document.querySelectorAll('[data-credmail-row-pill]').forEach((el) => el.remove());
+    console.log('[CredMail] Protection paused — UI cleared');
+  } else if (changes.is_active.newValue === true) {
+    console.log('[CredMail] Protection resumed');
+    void scanWithRetry();
+  }
+});

@@ -16,6 +16,8 @@ module.exports = {
     background: path.resolve(__dirname, 'src/background/index.ts'),
     content_gmail: path.resolve(__dirname, 'src/adapters/gmail/index.ts'),
     settings: path.resolve(__dirname, 'src/settings/settings.ts'),
+    popup: path.resolve(__dirname, 'src/popup/popup.ts'),
+    dashboard: path.resolve(__dirname, 'src/dashboard/dashboard.ts'),
   },
 
   output: {

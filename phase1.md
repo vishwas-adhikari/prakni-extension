@@ -387,3 +387,56 @@ currently-uncommitted working-tree changes.
 Existing email-open observer, cache Map, verdict flow, `banner.ts`, and `pill.ts` all unchanged; the
 `index.ts` diff is purely additive (one appended block). Deleting `row-scanner.ts` + that block
 leaves the rest compiling and working.
+
+---
+
+## Session P1.4c — Row Scanner Timing Fix
+
+> Pills were built and correct (P1.4b) but appeared unreliably — missing on fresh navigation and
+> sometimes never showing until a tab switch. All fixes are confined to the appended row-scanner
+> wiring block in `index.ts`; nothing above it (including the email-open observer) was touched.
+
+### 1. Root causes
+- **Trigger gap.** Gmail's SPA hash swaps don't reliably emit the `childList` mutations our
+  `MutationObserver` watches, so navigation often produced no scan at all.
+- **Attribute lag.** Gmail renders `.zA` rows first, then populates the `email` attributes a few
+  hundred ms later. The scanner ran, found no `@`, correctly skipped the row **without** marking it
+  — but never retried, because `MutationObserver` watches `childList`, not `attributes`, so the
+  later attribute fill fired no event.
+- **Why tab-switch "fixed" it.** Switching away and back unfreezes pending observer callbacks, and by
+  then the attributes are populated — masking the lag rather than solving it.
+
+### 2. Fix — four trigger layers (all appended to the row-scanner block)
+- **`hashchange` listener** — direct navigation trigger; scans 500ms after the hash changes
+  (covers the trigger gap the observer misses).
+- **`scanWithRetry()`** — runs `scanInboxRows()` immediately, then **once more at +1.5s**. The second
+  pass catches rows whose `email` attributes weren't populated on the first (the attribute-lag fix).
+- **Initial-load** `setTimeout(2000ms)` → `scanWithRetry()` — catches the first page render, where the
+  observer may have fired before any rows existed.
+- **Debounce 800ms → 500ms** on the `MutationObserver` (the double-tap absorbs the lag, so the first
+  pass can be more responsive). All three call sites — observer, hashchange, initial load — now call
+  `scanWithRetry()`.
+
+Resulting coverage: initial load 2s + retry 3.5s; navigation 0.5s + retry 2s; virtual scroll 0.5s
+debounced + retry 2s.
+
+### 3. Trade-offs / known limitations (flagged, not fixed)
+- **Two full passes per trigger.** `scanWithRetry` doubles each scan, and (from the P1.4b pill-existence
+  skip) safe rows already re-scan on every fire. Negligible at ~50–100 rows, but the passes can compound
+  when several layers fire close together (hashchange / initial-load aren't debounced against the
+  observer). Acceptable for now.
+- **Lag is timed-around, not observed.** The deterministic fix is to watch `attributes` on the rows
+  instead of guessing 1.5s. The double-tap is the simpler change requested; if the lag ever exceeds
+  1.5s on a slow load, a row could still be missed until the next trigger.
+- **~500ms–2s delay before pills appear** after navigation remains by design (render + debounce +
+  retry windows). Faster than before, not instant.
+
+### 4. Verification
+- `npm run build` → zero errors; `npx tsc -p packages/extension/tsconfig.json --noEmit` → exit 0.
+- No OTA/selector change this round, so no storage clear needed — reload + hard-refresh Gmail.
+- Core untouched (no harness re-run needed; the scanner isn't on the engine path).
+
+### 5. Still open
+Temp debug logging (`DEBUG row`, `Row observer fired`, `scanInboxRows called`, `is_active`) is still in
+the block, pending the one-pass cleanup; the `attributes`-observer upgrade remains the principled
+follow-up to the timing workaround.

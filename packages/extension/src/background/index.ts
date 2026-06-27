@@ -14,6 +14,8 @@ console.log('[CredMail] background alive');
 chrome.runtime.onInstalled.addListener(async () => {
   await initState();
   await runOtaSync();
+  // Counters are per-session — reset them on install/update.
+  await chrome.storage.local.set({ session_stats: { scanned: 0, detected: 0, markedSafe: 0 } });
   chrome.alarms.create(OTA_ALARM, { periodInMinutes: OTA_PERIOD_MINUTES });
 });
 

@@ -22,6 +22,7 @@ const DEFAULTS: LocalState = {
   local_blocklist: [],
   dom_selectors: {}, // populated by the first OTA sync
   scoring_config: DEFAULT_SCORING_CONFIG,
+  session_stats: { scanned: 0, detected: 0, markedSafe: 0 },
 };
 
 /** Domains/senders are case-insensitive — normalize before storing or comparing. */

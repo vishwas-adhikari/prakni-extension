@@ -66,4 +66,5 @@ export interface LocalState {
   local_blocklist: string[];
   dom_selectors: Record<string, unknown>; // cached OTA (string[] for engine selectors, an object for row selectors)
   scoring_config: ScoringConfig; // cached OTA
+  session_stats: { scanned: number; detected: number; markedSafe: number }; // this-session counters
 }
