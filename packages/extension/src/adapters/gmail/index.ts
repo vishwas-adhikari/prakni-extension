@@ -96,7 +96,7 @@ console.log('[CredMail] gmail content script loaded');
 // above depends on it. (Import sits here, not at the top, to keep it one deletable unit.)
 import { scanInboxRows } from './row-scanner';
 
-const ROW_SCAN_DEBOUNCE_MS = 800;
+const ROW_SCAN_DEBOUNCE_MS = 500;
 const MESSAGE_ID_MIN_LEN = 20;
 
 /** True for list views (#inbox, #label/X, #search/q); false for an open message,
@@ -107,6 +107,20 @@ function isInboxView(): boolean {
   return segments[segments.length - 1].length <= MESSAGE_ID_MIN_LEN;
 }
 
+/** Scan now, then once more 1.5s later — the second pass catches rows whose email
+ * attributes hadn't been populated yet on the first pass (Gmail fills them in after
+ * the row renders, and no childList mutation fires for that attribute change). */
+async function scanWithRetry(): Promise<void> {
+  await scanInboxRows();
+  setTimeout(async () => {
+    try {
+      await scanInboxRows();
+    } catch {
+      /* best effort */
+    }
+  }, 1500);
+}
+
 let rowScanTimer: number | undefined;
 new MutationObserver(() => {
   if (rowScanTimer !== undefined) clearTimeout(rowScanTimer);
@@ -115,9 +129,35 @@ new MutationObserver(() => {
     try {
       const { is_active } = await chrome.storage.local.get({ is_active: true });
       console.log('[CredMail] is_active:', is_active);
-      if (is_active && isInboxView()) await scanInboxRows();
+      if (is_active && isInboxView()) await scanWithRetry();
     } catch {
       /* row scan is best-effort — never crash the observer */
     }
   }, ROW_SCAN_DEBOUNCE_MS);
 }).observe(document.body, { childList: true, subtree: true });
+
+// Direct navigation trigger (fixes the trigger gap): Gmail's SPA hash swaps don't
+// reliably emit the childList mutations our observer watches, so scan on hashchange
+// too — after a short render delay.
+window.addEventListener('hashchange', () => {
+  setTimeout(async () => {
+    if (!isInboxView()) return;
+    try {
+      const { is_active } = await chrome.storage.local.get({ is_active: true });
+      if (is_active) await scanWithRetry();
+    } catch {
+      /* best effort */
+    }
+  }, 500);
+});
+
+// First page render: the observer may have fired before any rows existed.
+setTimeout(async () => {
+  if (!isInboxView()) return;
+  try {
+    const { is_active } = await chrome.storage.local.get({ is_active: true });
+    if (is_active) await scanWithRetry();
+  } catch {
+    /* best effort */
+  }
+}, 2000);

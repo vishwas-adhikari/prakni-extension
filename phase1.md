@@ -311,3 +311,79 @@ was the right call both times.
 **Still open:** Report intake call (currently logs only); settings page wiring; inbox-list-row pill;
 the OTA attribute-name gap (A1); optional `is_active` guard on cache hit (A3); committing the
 currently-uncommitted working-tree changes.
+
+---
+
+## Session P1.4b — Lightweight Inbox Row Scanner
+
+> Builds the inbox-list-row pill that A5 listed as "still open." A **separate, disposable**
+> system from the open-email detection pipeline — its own observer, no shared state, no core.
+
+### 1. What was built
+- **`src/adapters/gmail/row-scanner.ts`** — a self-contained inbox scanner, fully isolated from the
+  core engine. Reads three cheap signals off each `.zA` row (blocklist hit; freemail-domain +
+  brand-in-sender-name; freemail-domain + brand-in-subject) and pills the suspicious ones. Imports
+  `brands.json` / `free-email-providers.json` directly; reads `chrome.storage.local` directly; no
+  `@credmail/core`, parser, observer, or storage-wrapper imports.
+- **OTA row selectors** — added a `row` key to `gmail-selectors.json` (`container`, `senderName`,
+  `senderEmail`, `subject`, `threadIdAttrs`). Rides along on the existing OTA sync into
+  `dom_selectors.row`; the scanner falls back to a hardcoded `DEFAULT_ROW_SELECTORS` if storage
+  hasn't synced.
+- **Separate `MutationObserver`** on `document.body` (800ms debounce) appended to `index.ts` — a
+  different observer from the email-open one, gated on `is_active` + `isInboxView()`. Catches initial
+  load, virtual-scroll row loading, and back-to-inbox navigation.
+- **Pill injection** — a small `⚠ Suspicious` span after the row subject (never "High Risk" — not
+  enough data at the row level). CSP-safe: `Object.assign` styles, `createElement` + `textContent`,
+  idempotent (removes any existing row pill before inserting).
+
+### 2. Bugs found and fixed
+- **`getAttribute('[email]')` bracket trap.** `senderEmail` was `['[email]', '[data-hovercard-id]']`
+  — CSS selector syntax — but the values are passed to `getAttribute()`, which wants plain attribute
+  **names**. So every lookup returned `null`, `findSender` matched nothing, and every row hit
+  `continue` before marking (no marks, no pills). Fixed to `['email', 'data-hovercard-id']` in both
+  `row-scanner.ts` and `gmail-selectors.json`. (`senderName` correctly keeps `span[email]` — those
+  go to `querySelectorAll`.) Found via per-row debug logging after the observer/`is_active`/row-count
+  logs confirmed the outer mechanism was fine.
+- **Empty `catch {}` swallowing errors.** The scanner's best-effort `try/catch` hid failures
+  silently, which slowed diagnosis. Replaced with `catch (err) { console.error('[CredMail] Row scan
+  failed:', err); }`.
+- **Pills disappearing on back-navigation.** Gmail's SPA destroys the pill span on re-render but
+  keeps the outer row element **and** our `data-credmail-row` mark (a ghost marker). The scanner saw
+  the mark, assumed "already scanned," and skipped — leaving the row pill-less. Fixed by requiring
+  **both** the mark match **and** a live `[data-credmail-row-pill]` before skipping; if the mark
+  matches but the pill is gone, the row re-scans and re-injects.
+- **`isInboxView()` matches `#sent`** — noted but **deferred** (a feature/refinement, not a bug; see §4).
+
+### 3. Architecture decisions
+- **Full isolation from the core engine** — no `@credmail/core` imports anywhere in the scanner; it
+  is deletable (file + the one appended block in `index.ts`) with zero impact on the rest.
+- **OTA-healable selectors with a hardcoded fallback** — row selectors ship via OTA but degrade to
+  `DEFAULT_ROW_SELECTORS`, so a Gmail class change is a config update, not a code change.
+- **`Record<string, unknown>` in `core/types.ts`** — type-only widening of `LocalState.dom_selectors`
+  so it can honestly hold both `string[]` engine selectors and the object-valued `row`. Required two
+  matching type-only edits in `local-state.ts` (widen `setDomSelectors` param; cast `getDomSelectors`
+  return) — pre-approved, since the core change alone would not compile otherwise. Zero runtime/engine
+  change.
+- **800ms debounce** on the body `MutationObserver` — collapses Gmail's mutation storms and absorbs
+  virtual-scroll churn.
+
+### 4. Known issues remaining
+- **~800ms delay before pills reappear after back-navigation** — the debounce gap. The re-scan is
+  correct, just not instant. Fix planned (e.g. an immediate first-pass before the debounced one).
+- **Sent folder detected as inbox view** — `isInboxView()` treats `#sent` (and other short-hash list
+  views) as scannable. Deferred; harmless (sent mail simply rarely trips the heuristics).
+- **Temporary debug logging still in the code** — the `[CredMail] DEBUG row …` / `Row observer fired`
+  / `scanInboxRows called` / `is_active` lines added during diagnosis are still present, pending a
+  one-pass cleanup once the scanner is confirmed stable in the wild.
+
+### 5. Verification
+- `npm run harness` → **0% FP, 100% catch** (core engine unaffected — the type change is type-only,
+  and `row-scanner.ts` isn't exercised by the corpus).
+- `npm run build` → zero errors; `npx tsc -p packages/extension/tsconfig.json --noEmit` → exit 0.
+- **Chrome:** pills appear on brand-spoof rows; safe/normal rows stay bare; virtual-scroll rows get
+  scanned; navigating to an email and back re-pills (after the debounce).
+
+### 6. Isolation proof
+Existing email-open observer, cache Map, verdict flow, `banner.ts`, and `pill.ts` all unchanged; the
+`index.ts` diff is purely additive (one appended block). Deleting `row-scanner.ts` + that block
+leaves the rest compiling and working.
