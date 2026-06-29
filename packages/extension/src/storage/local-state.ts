@@ -19,6 +19,7 @@ const DEFAULTS: LocalState = {
   auth_token: null,
   is_active: true,
   local_whitelist: [],
+  safe_contacts: [],
   local_blocklist: [],
   dom_selectors: {}, // populated by the first OTA sync
   scoring_config: DEFAULT_SCORING_CONFIG,
@@ -66,6 +67,27 @@ export async function removeFromWhitelist(domain: string): Promise<void> {
   const target = normalize(domain);
   const list = await getWhitelist();
   await setState({ local_whitelist: list.filter((d) => d !== target) });
+}
+
+/**
+ * Full email addresses the user marked safe on a freemail domain (e.g.
+ * "friend@gmail.com"). Kept separate from local_whitelist so we never trust a
+ * whole public-provider domain — only the specific address.
+ */
+export async function getSafeContacts(): Promise<string[]> {
+  return (await getState()).safe_contacts;
+}
+
+export async function addToSafeContacts(email: string): Promise<void> {
+  const list = await getSafeContacts();
+  const next = Array.from(new Set([...list, normalize(email)]));
+  await setState({ safe_contacts: next });
+}
+
+export async function removeFromSafeContacts(email: string): Promise<void> {
+  const target = normalize(email);
+  const list = await getSafeContacts();
+  await setState({ safe_contacts: list.filter((e) => e !== target) });
 }
 
 export async function getBlocklist(): Promise<string[]> {

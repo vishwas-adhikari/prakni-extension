@@ -8,6 +8,9 @@ import {
   getWhitelist,
   addToWhitelist,
   removeFromWhitelist,
+  getSafeContacts,
+  addToSafeContacts,
+  removeFromSafeContacts,
   getBlocklist,
   addToBlocklist,
   removeFromBlocklist,
@@ -77,6 +80,7 @@ function muted(text: string, size = '13px'): HTMLDivElement {
 /** A managed list card (trusted domains / blocked senders). */
 function listSection(opts: {
   title: string;
+  subtitle?: string;
   emptyText: string;
   placeholder: string;
   validate: (v: string) => boolean;
@@ -90,6 +94,11 @@ function listSection(opts: {
   const card = createCard();
   const heading = sectionTitle(opts.title);
   card.appendChild(heading);
+  if (opts.subtitle) {
+    const sub = muted(opts.subtitle, '12px');
+    sub.style.marginBottom = '12px';
+    card.appendChild(sub);
+  }
 
   const list = document.createElement('div');
   Object.assign(list.style, {
@@ -463,6 +472,26 @@ async function render(): Promise<void> {
     remove: removeFromWhitelist,
   });
 
+  const safeContactsCard = listSection({
+    title: 'Safe Contacts',
+    subtitle:
+      "Individual email addresses you've marked safe. Used for public email providers " +
+      'like Gmail where trusting the whole domain would be unsafe.',
+    emptyText:
+      'No safe contacts yet. When you mark an email safe from a public provider like ' +
+      'Gmail, it appears here.',
+    placeholder: 'friend@gmail.com',
+    invalidText: 'Enter a valid email address (must contain @)',
+    validate: (v) => v.includes('@') && !/\s/.test(v),
+    extraReject: (v) =>
+      FREE_PROVIDERS.has((v.split('@')[1] ?? '').toLowerCase())
+        ? null
+        : 'Use Trusted Domains instead for non-public email providers.',
+    load: getSafeContacts,
+    add: addToSafeContacts,
+    remove: removeFromSafeContacts,
+  });
+
   const blockedCard = listSection({
     title: 'Reported Senders',
     emptyText: 'No reported senders yet',
@@ -475,7 +504,7 @@ async function render(): Promise<void> {
   });
 
   leftCol.append(protCard, detCard, aboutCard);
-  rightCol.append(trustedCard, blockedCard);
+  rightCol.append(trustedCard, safeContactsCard, blockedCard);
   grid.append(leftCol, rightCol);
 
   document.body.append(topBar, grid);

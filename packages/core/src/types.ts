@@ -63,6 +63,7 @@ export interface LocalState {
   auth_token: string | null; // signed tier token [P2]
   is_active: boolean;
   local_whitelist: string[];
+  safe_contacts: string[]; // full email addresses marked safe on freemail domains
   local_blocklist: string[];
   dom_selectors: Record<string, unknown>; // cached OTA (string[] for engine selectors, an object for row selectors)
   scoring_config: ScoringConfig; // cached OTA

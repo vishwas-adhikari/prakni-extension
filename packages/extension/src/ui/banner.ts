@@ -20,7 +20,13 @@ import {
 } from './styles';
 
 const BANNER_ATTR = 'data-credmail-banner';
+const PILL_ATTR = 'data-credmail-pill';
 const LINK_MAX = 60;
+
+// Containers whose banner is mid Mark-Safe transition. While present, injectBanner
+// bails out early so a re-score's silent verdict can't yank the green banner away
+// before the fade finishes.
+const transitioningBanners = new Set<HTMLElement>();
 
 /** Drop the query string (privacy: CLAUDE.md) and truncate for display. */
 function displayUrl(url: string): string {
@@ -32,8 +38,58 @@ function makeButton(label: string, onClick: () => void): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.textContent = label;
   Object.assign(btn.style, button);
-  btn.addEventListener('click', onClick);
+  // Gmail swallows clicks on injected nodes — stop the event reaching its handlers.
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    onClick();
+  });
   return btn;
+}
+
+/**
+ * Mark-Safe transition: morph the warning banner into a green confirmation, hand the
+ * full sender address up to the adapter (which decides domain vs. contact), then fade
+ * the banner + reading-pane pill out. The container is "owned" for the duration so a
+ * re-score can't disturb the animation (see the guard in injectBanner).
+ */
+function markSafe(
+  banner: HTMLElement,
+  container: HTMLElement,
+  senderEmail: string,
+  onMarkSafe: (senderEmail: string) => void,
+): void {
+  transitioningBanners.add(container);
+
+  // Repaint green and strip the warning content.
+  Object.assign(banner.style, {
+    background: '#F0FDF4',
+    borderLeft: '4px solid #16A34A',
+    color: '#166534',
+  });
+  banner.textContent = '';
+
+  const header = document.createElement('div');
+  Object.assign(header.style, bannerHeader);
+  header.textContent = '✅ Marked Safe';
+  banner.appendChild(header);
+
+  const note = document.createElement('div');
+  note.textContent = 'This sender has been added to your trusted list.';
+  banner.appendChild(note);
+
+  // Dumb UI: pass the full address up; the adapter routes domain vs. contact.
+  onMarkSafe(senderEmail);
+
+  setTimeout(() => {
+    Object.assign(banner.style, { transition: 'opacity 0.8s ease', opacity: '0' });
+  }, 2000);
+
+  setTimeout(() => {
+    banner.remove();
+    document.querySelectorAll(`[${PILL_ATTR}]`).forEach((el) => el.remove());
+    transitioningBanners.delete(container);
+  }, 2800);
 }
 
 /**
@@ -44,8 +100,11 @@ export function injectBanner(
   verdict: VerdictView,
   container: HTMLElement,
   senderEmail: string,
-  onMarkSafe: (domain: string) => void,
+  onMarkSafe: (senderEmail: string) => void,
 ): void {
+  // A Mark-Safe transition owns this container until its fade completes — don't let
+  // a re-score's (silent) verdict clear the green banner out from under it.
+  if (transitioningBanners.has(container)) return;
   // Idempotent + silent-clear: always remove a prior banner first.
   container.querySelectorAll(`[${BANNER_ATTR}]`).forEach((el) => el.remove());
   if (verdict.silent) return;
@@ -84,11 +143,12 @@ export function injectBanner(
   Object.assign(actions.style, buttonRow);
 
   actions.appendChild(
-    makeButton('Mark Safe', () => onMarkSafe(senderEmail.split('@')[1] ?? '')),
+    makeButton('Mark Safe', () => markSafe(banner, container, senderEmail, onMarkSafe)),
   );
 
   // Report logs the first flagged link (query-stripped); P1 stub for the intake call.
-  const reportUrl = verdict.reasons.flatMap((r) => r.affectedLinks ?? [])[0] ?? '';
+  // No flagged links (e.g. content-only warning) → fall back to the sender address.
+  const reportUrl = verdict.reasons.flatMap((r) => r.affectedLinks ?? [])[0] || senderEmail;
   actions.appendChild(
     makeButton('Report', () => console.log('[CredMail] Report:', reportUrl.split('?')[0])),
   );

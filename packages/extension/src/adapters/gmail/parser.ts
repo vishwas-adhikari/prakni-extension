@@ -210,8 +210,5 @@ export async function extract(
     auth: { spf: 'unknown', dkim: 'unknown', dmarc: 'unknown', aligned: null },
   };
 
-  // TODO [debug] remove once the sender-scoping fix is verified in live Gmail.
-  console.log('[CredMail] DEBUG emailData:', JSON.stringify(emailData));
-
   return emailData;
 }

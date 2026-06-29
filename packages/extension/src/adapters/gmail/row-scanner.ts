@@ -126,7 +126,6 @@ function injectRowPill(row: Element, subjectEl: Element, kind: PillKind): void {
  */
 export async function scanInboxRows(): Promise<void> {
   try {
-    console.log('[CredMail] scanInboxRows called, rows found:', document.querySelectorAll('.zA').length);
     // Read selectors + blocklist ONCE (direct storage read — not the wrapper).
     const stored = await chrome.storage.local.get({ dom_selectors: {}, local_blocklist: [] });
     const domSelectors = stored.dom_selectors as { row?: RowSelectors } | undefined;
@@ -149,9 +148,6 @@ export async function scanInboxRows(): Promise<void> {
 
       const sender = findSender(row, sel);
       if (!sender) {
-        console.log('[CredMail] DEBUG row skipped — no senderName element had an @ attr', {
-          threadId,
-        });
         continue; // not rendered yet / unidentifiable — retry next fire, don't mark
       }
 
@@ -163,17 +159,6 @@ export async function scanInboxRows(): Promise<void> {
 
       const isReported = blocklist.has(senderEmail.toLowerCase());
       const isSpoof = isFreemail && (mentionsBrand(senderName) || mentionsBrand(subject));
-
-      console.log('[CredMail] DEBUG row', {
-        senderEmail,
-        senderName,
-        subject,
-        domain: domainOf(senderEmail),
-        isFreemail,
-        hasSubjectEl: !!subjectEl,
-        isReported,
-        isSpoof,
-      });
 
       // Blocklist (the user's explicit flag) wins over the heuristic spoof pill.
       if ((isReported || isSpoof) && subjectEl) {

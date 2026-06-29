@@ -6,11 +6,22 @@
 // "Mark Safe" sender or the tuned thresholds.
 
 import { analyzeEmail, type Verdict } from '@credmail/core';
-import { getState, getDomSelectors, addToWhitelist } from '../../storage/local-state';
+import {
+  getState,
+  getDomSelectors,
+  addToWhitelist,
+  addToSafeContacts,
+} from '../../storage/local-state';
 import { startObserver } from './observer';
 import { extract } from './parser';
 import { injectBanner } from '../../ui/banner';
 import { injectPill } from '../../ui/pill';
+import freeProviders from '../../../../../data/free-email-providers.json';
+
+// Freemail domains can't be trusted wholesale — whitelisting gmail.com would clear the
+// gate for every Gmail sender. When Mark Safe lands on one of these we store the full
+// address as a safe contact instead of the domain.
+const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerCase()));
 
 // Scored verdicts by message id. The engine never re-runs for a message we've
 // already judged — reopening an email is a cache hit, not a rescan. We keep the
@@ -47,7 +58,7 @@ async function render(
   verdict: Verdict,
   container: Element,
   senderEmail: string,
-  onMarkSafe: (domain: string) => void,
+  onMarkSafe: (senderEmail: string) => void,
 ): Promise<void> {
   // Core's Verdict is structurally the UI's VerdictView; container is an Element
   // here but the banner only uses ParentNode ops.
@@ -57,11 +68,16 @@ async function render(
 }
 
 startObserver(async (messageId, container) => {
-  // Mark Safe: whitelist the sender's domain, then re-extract from the LIVE DOM and
-  // re-score (never a cached emailData — we don't store one) so the new verdict is
-  // accurate. A failed extraction is logged and skipped, never thrown.
-  const onMarkSafe = async (domain: string): Promise<void> => {
-    if (domain) await addToWhitelist(domain);
+  // Mark Safe: trust the sender, then re-extract from the LIVE DOM and re-score (never
+  // a cached emailData — we don't store one) so the new verdict is accurate. Freemail
+  // senders trust the full address (safe contact); everyone else trusts the domain.
+  // A failed extraction is logged and skipped, never thrown.
+  const onMarkSafe = async (senderEmail: string): Promise<void> => {
+    const domain = senderEmail.split('@')[1]?.toLowerCase() ?? '';
+    if (domain) {
+      if (FREE_PROVIDERS.has(domain)) await addToSafeContacts(senderEmail);
+      else await addToWhitelist(domain);
+    }
     await incrementStat('markedSafe');
     const fresh = await extract(container, messageId);
     if (!fresh) {
@@ -71,7 +87,8 @@ startObserver(async (messageId, container) => {
       return;
     }
     const state = await getState();
-    const verdict = analyzeEmail(fresh, state.scoring_config, state.local_whitelist);
+    const whitelist = [...state.local_whitelist, ...state.safe_contacts];
+    const verdict = analyzeEmail(fresh, state.scoring_config, whitelist);
     verdictCache.set(messageId, { verdict, senderEmail: fresh.senderEmail });
     await render(verdict, container, fresh.senderEmail, onMarkSafe);
   };
@@ -91,7 +108,8 @@ startObserver(async (messageId, container) => {
   const emailData = await extract(container, messageId);
   if (!emailData) return; // low confidence — parser already fired telemetry
 
-  const verdict = analyzeEmail(emailData, state.scoring_config, state.local_whitelist);
+  const whitelist = [...state.local_whitelist, ...state.safe_contacts];
+  const verdict = analyzeEmail(emailData, state.scoring_config, whitelist);
   verdictCache.set(messageId, { verdict, senderEmail: emailData.senderEmail });
   console.log(
     `[CredMail] Verdict for ${messageId}: ${verdict.riskLevel} (${verdict.score})`,
@@ -145,10 +163,8 @@ let rowScanTimer: number | undefined;
 new MutationObserver(() => {
   if (rowScanTimer !== undefined) clearTimeout(rowScanTimer);
   rowScanTimer = window.setTimeout(async () => {
-    console.log('[CredMail] Row observer fired, hash:', location.hash, 'isInbox:', isInboxView());
     try {
       const { is_active } = await chrome.storage.local.get({ is_active: true });
-      console.log('[CredMail] is_active:', is_active);
       if (is_active && isInboxView()) await scanWithRetry();
     } catch {
       /* row scan is best-effort — never crash the observer */
