@@ -101,6 +101,7 @@ export function injectBanner(
   container: HTMLElement,
   senderEmail: string,
   onMarkSafe: (senderEmail: string) => void,
+  onReport: (senderEmail: string) => void,
 ): void {
   // A Mark-Safe transition owns this container until its fade completes — don't let
   // a re-score's (silent) verdict clear the green banner out from under it.
@@ -149,9 +150,14 @@ export function injectBanner(
   // Report logs the first flagged link (query-stripped); P1 stub for the intake call.
   // No flagged links (e.g. content-only warning) → fall back to the sender address.
   const reportUrl = verdict.reasons.flatMap((r) => r.affectedLinks ?? [])[0] || senderEmail;
-  actions.appendChild(
-    makeButton('Report', () => console.log('[CredMail] Report:', reportUrl.split('?')[0])),
-  );
+  const reportBtn = makeButton('Report', () => {
+    console.log('[CredMail] Report:', reportUrl.split('?')[0]);
+    onReport(senderEmail);
+    reportBtn.disabled = true;
+    reportBtn.textContent = '✓ Reported';
+    Object.assign(reportBtn.style, { background: '#E5E7EB', cursor: 'default' });
+  });
+  actions.appendChild(reportBtn);
 
   banner.appendChild(actions);
 

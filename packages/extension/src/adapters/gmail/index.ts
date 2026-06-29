@@ -11,6 +11,7 @@ import {
   getDomSelectors,
   addToWhitelist,
   addToSafeContacts,
+  addToBlocklist,
 } from '../../storage/local-state';
 import { startObserver } from './observer';
 import { extract } from './parser';
@@ -59,10 +60,11 @@ async function render(
   container: Element,
   senderEmail: string,
   onMarkSafe: (senderEmail: string) => void,
+  onReport: (senderEmail: string) => void,
 ): Promise<void> {
   // Core's Verdict is structurally the UI's VerdictView; container is an Element
   // here but the banner only uses ParentNode ops.
-  injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe);
+  injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe, onReport);
   const subjectEl = await findSubjectElement();
   if (subjectEl) injectPill(verdict, subjectEl);
 }
@@ -90,7 +92,15 @@ startObserver(async (messageId, container) => {
     const whitelist = [...state.local_whitelist, ...state.safe_contacts];
     const verdict = analyzeEmail(fresh, state.scoring_config, whitelist);
     verdictCache.set(messageId, { verdict, senderEmail: fresh.senderEmail });
-    await render(verdict, container, fresh.senderEmail, onMarkSafe);
+    await render(verdict, container, fresh.senderEmail, onMarkSafe, onReport);
+  };
+
+  // Report: add the sender to the blocklist so the inbox row scanner flags it as
+  // "reported", and count it as a detection.
+  const onReport = async (senderEmail: string): Promise<void> => {
+    await addToBlocklist(senderEmail);
+    await incrementStat('detected');
+    console.log('[CredMail] Reported:', senderEmail);
   };
 
   const cached = verdictCache.get(messageId);
@@ -98,7 +108,7 @@ startObserver(async (messageId, container) => {
     console.log(
       `[CredMail] cache hit for ${messageId}: ${cached.verdict.riskLevel} (${cached.verdict.score})`,
     );
-    await render(cached.verdict, container, cached.senderEmail, onMarkSafe);
+    await render(cached.verdict, container, cached.senderEmail, onMarkSafe, onReport);
     return;
   }
 
@@ -119,7 +129,7 @@ startObserver(async (messageId, container) => {
   if (verdict.riskLevel === 'Suspicious' || verdict.riskLevel === 'High Risk') {
     await incrementStat('detected');
   }
-  await render(verdict, container, emailData.senderEmail, onMarkSafe);
+  await render(verdict, container, emailData.senderEmail, onMarkSafe, onReport);
 });
 
 console.log('[CredMail] gmail content script loaded');
