@@ -58,11 +58,17 @@ export interface LocalState {          // chrome.storage.local
   auth_token: string | null;           // signed tier token [P2]
   is_active: boolean;
   local_whitelist: string[];
+  safe_contacts: string[];             // full addresses marked safe on freemail domains
   local_blocklist: string[];
-  dom_selectors: Record<string, string[]>;  // cached OTA
+  dom_selectors: Record<string, unknown>;    // cached OTA (string[] engine selectors + object-valued `row`)
   scoring_config: ScoringConfig;             // cached OTA
+  session_stats: { scanned: number; detected: number; markedSafe: number };  // this-session counters
 }
 ```
+
+> **Extension-only storage keys** (kept in `chrome.storage.local` but *not* part of
+> the `LocalState` interface, since the pure `core/` engine never reads them):
+> - `scan_inbox_rows: boolean` — user toggle for the inbox row scanner (default `true`).
 
 ## Cloud schema (Supabase / PostgreSQL)
 
