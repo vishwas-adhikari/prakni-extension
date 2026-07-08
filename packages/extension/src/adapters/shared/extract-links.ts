@@ -14,7 +14,7 @@ export interface ExtractedLink {
  * lookalike rules go blind. Unwrap to the real destination in the `q` param. Parsing
  * is in a try/catch — a relative or malformed href is left untouched, not dropped.
  */
-function unwrapGoogleRedirect(url: string): string {
+export function unwrapGoogleRedirect(url: string): string {
   try {
     const parsed = new URL(url);
     if (

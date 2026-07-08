@@ -440,3 +440,60 @@ debounced + retry 2s.
 Temp debug logging (`DEBUG row`, `Row observer fired`, `scanInboxRows called`, `is_active`) is still in
 the block, pending the one-pass cleanup; the `attributes`-observer upgrade remains the principled
 follow-up to the timing workaround.
+
+---
+
+## Session — Full Compliance Audit + Cleanup (2026-07-08)
+
+> A **read-only audit** of the whole codebase against `CLAUDE.md` and every doc in `docs/`,
+> followed by two small doc/dead-code cleanups. No detection logic was touched at any point.
+
+### 1. The audit
+
+Checked eight areas, each reported as **PASS**, **VIOLATION** (file+line), or **DRIFT**
+(technically fine but diverging from a doc's intent). Verified against the actual code, not
+memory — plus a full `npm run harness` and `npm test`.
+
+**No VIOLATIONS found.** Results:
+
+| # | Area | Result |
+| :-- | :-- | :-- |
+| 1 | **Core purity** (CLAUDE.md) | ✅ PASS — no `document`/`window`/`chrome.*` in `core/` (grep hits are comments/corpus JSON only); no import from `extension/`; `analyzeEmail` runs in Node (50 Jest tests prove it). |
+| 2 | **Privacy** (CLAUDE.md) | ✅ PASS — zero network egress anywhere (`fetch`/`XHR`/`sendBeacon`/`.post` → no matches); telemetry & Report are local `console.log`/storage only; URLs query-stripped (`banner.ts:33,154`). |
+| 3 | **Precision rules** (detection.md) | ✅ PASS — gate runs first (`index.ts:32`), single weak signal can't warn (`scorer.ts:44-51`), thresholds from `ScoringConfig`. **DRIFT:** dashboard hardcodes sensitivity presets and writes them into `scoring_config` (`dashboard.ts:46-50,381-383`), which shadows any future OTA-delivered threshold (OTA sync only writes `dom_selectors`). |
+| 4 | **MV3** (CLAUDE.md) | ✅ PASS — no `eval()`/`new Function()` in `dist/`; background is a `service_worker` (`manifest.json:14`); state in `chrome.storage.local`; permissions minimal (`storage`,`alarms`). |
+| 5 | **Architecture** (architecture.md) | ✅ PASS — core+adapters separation intact; no detection logic in adapters. **DRIFT (by design):** `row-scanner.ts` deliberately replicates the brand-mention heuristic locally (`:33-35,63-66`) to stay import-free/disposable — a second copy that can drift from core. |
+| 6 | **DOM resilience** (dom-resilience.md) | ✅ PASS — OTA selectors before heuristic fallback; confidence gate aborts + fires telemetry (`parser.ts:195-201`). **DRIFT:** attribute names (`email`, `data-hovercard-id`, `name`) hardcoded in `parser.ts` / `row-scanner.ts` — cannot OTA-self-heal (known, previously deferred). |
+| 7 | **Phase discipline** (roadmap.md) | ✅ PASS — no P2/P3/P4 scope pulled forward; no tier gating / DOM-scraped licensing; no deferred-scope TODOs. **DRIFT:** `schema.md` `LocalState` was stale vs. `core/src/types.ts`; `settings.ts` was a dead stub. (Both fixed below.) |
+| 8 | **Corpus health** | ✅ PASS — `harness`: **0/50 FP (0.0%)**, **49/49 catch (100%)**, precision proof stayed Safe, P0 exit **PASS**. `test`: **12 suites / 50 tests** pass. |
+
+**Priority follow-ups surfaced (not acted on):**
+1. **Threshold precedence** (§3 DRIFT) — decide OTA-vs-user-override before real OTA config ships in P3.
+2. **OTA attribute-name gap** (§6 DRIFT) — the one place the self-healing promise doesn't currently hold.
+
+### 2. Cleanups performed (doc + dead code only)
+
+**(a) `docs/schema.md` synced to the real `LocalState`** (`core/src/types.ts`):
+- added `safe_contacts: string[]`;
+- added `session_stats: { scanned; detected; markedSafe }`;
+- changed `dom_selectors` to `Record<string, unknown>` (holds both `string[]` engine selectors
+  and the object-valued `row` selectors);
+- documented `scan_inbox_rows: boolean` as an **extension-only** storage key (never read by
+  the pure `core/` engine, so deliberately not in the `LocalState` interface).
+
+**(b) Removed the dead settings stub.** `src/settings/settings.ts` was a 2-line
+`console.log` scaffold, superseded by the dashboard; reachable only via its webpack entry.
+Verified first: manifest never referenced it, and nothing imported it.
+- deleted `packages/extension/src/settings/settings.ts`;
+- deleted `packages/extension/public/settings.html` (a comment-only placeholder, orphaned once
+  the entry was gone);
+- removed the `settings` entry from `webpack.config.js`;
+- manifest.json needed no change (no reference).
+
+### 3. Verification
+- `npm run build` → **green** (`webpack compiled successfully`). `dist/` now emits exactly four
+  bundles — `background`, `content_gmail`, `popup`, `dashboard` — with `settings.js` /
+  `settings.js.map` / `settings.html` gone (the `clean: true` output wiped the stale artifacts).
+- `npm run harness` / `npm test` unchanged from §1 (no logic touched).
+- Working tree: `M docs/schema.md`, `M webpack.config.js`, `D settings.html`, `D settings.ts` —
+  left uncommitted for review.

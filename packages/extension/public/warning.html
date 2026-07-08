@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!-- [P1.5] Link Shield warning page. Runs in the extension context. All UI is built
+     in warning.js (createElement + textContent, styles via Object.assign) — MV3 CSP
+     bans inline script, so the logic is loaded as an external bundle. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phishing Link Blocked · Cred Mail</title>
+  </head>
+  <body>
+    <script src="warning.js"></script>
+  </body>
+</html>

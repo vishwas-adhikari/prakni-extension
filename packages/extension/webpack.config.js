@@ -17,6 +17,7 @@ module.exports = {
     content_gmail: path.resolve(__dirname, 'src/adapters/gmail/index.ts'),
     popup: path.resolve(__dirname, 'src/popup/popup.ts'),
     dashboard: path.resolve(__dirname, 'src/dashboard/dashboard.ts'),
+    warning: path.resolve(__dirname, 'src/warning/warning.ts'),
   },
 
   output: {

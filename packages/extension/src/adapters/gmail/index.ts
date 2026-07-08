@@ -17,6 +17,7 @@ import { startObserver } from './observer';
 import { extract } from './parser';
 import { injectBanner } from '../../ui/banner';
 import { injectPill } from '../../ui/pill';
+import { hijackBadLinks, restoreLinks } from './interceptor';
 import freeProviders from '../../../../../data/free-email-providers.json';
 
 // Freemail domains can't be trusted wholesale — whitelisting gmail.com would clear the
@@ -67,6 +68,18 @@ async function render(
   injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe, onReport);
   const subjectEl = await findSubjectElement();
   if (subjectEl) injectPill(verdict, subjectEl);
+
+  // Link Shield: on a warning verdict, rewrite the flagged links to route through
+  // the local warning page; on a Safe/silent verdict, undo any prior hijack. Runs
+  // on every render path (cache miss, cache hit, and the Mark-Safe re-render).
+  const el = container as HTMLElement;
+  if (verdict.silent) {
+    restoreLinks(el);
+  } else {
+    const badLinks = verdict.reasons.flatMap((r) => r.affectedLinks ?? []);
+    const reasons = verdict.reasons.map((r) => r.description);
+    hijackBadLinks(el, badLinks, reasons);
+  }
 }
 
 startObserver(async (messageId, container) => {
@@ -75,6 +88,9 @@ startObserver(async (messageId, container) => {
   // senders trust the full address (safe contact); everyone else trusts the domain.
   // A failed extraction is logged and skipped, never thrown.
   const onMarkSafe = async (senderEmail: string): Promise<void> => {
+    // Restore hijacked links up front, so they're returned to normal even if the
+    // re-extract below fails (the silent re-render would otherwise do it for us).
+    restoreLinks(container as HTMLElement);
     const domain = senderEmail.split('@')[1]?.toLowerCase() ?? '';
     if (domain) {
       if (FREE_PROVIDERS.has(domain)) await addToSafeContacts(senderEmail);
