@@ -20,75 +20,162 @@ export interface VerdictView {
 }
 
 // --- Banner -----------------------------------------------------------------
+//
+// Two-column layout: [icon circle] [content grid]. The content grid is
+// `1fr auto` — reasons on the left, a stacked button + footer column on the
+// right — with the header spanning both. Colour maps are merged onto the bases.
 
-/** Shared across both risk levels; merged with a colour map below. */
+/** Outer container: flex row, shared across both risk levels. */
 export const bannerBase: StyleMap = {
-  padding: '12px',
-  margin: '8px 0',
-  borderRadius: '6px',
-  fontSize: '13px',
+  display: 'flex',
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: '20px',
+  padding: '20px 24px',
+  marginBottom: '16px',
+  borderRadius: '12px',
+  boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+  fontSize: '14px',
   fontFamily: 'inherit',
   zIndex: '9999',
   position: 'relative',
 };
 
 export const bannerSuspicious: StyleMap = {
-  background: '#FFF7ED',
-  borderLeft: '4px solid #ED6C02',
-  color: '#7C2D12',
+  background: '#FFF8F0',
+  borderLeft: '5px solid #FF9800',
 };
 
 export const bannerHighRisk: StyleMap = {
-  background: '#FEF2F2',
-  borderLeft: '4px solid #C62828',
-  color: '#7F1D1D',
+  background: '#FFF0F0',
+  borderLeft: '5px solid #C62828',
+};
+
+/** Left column: large circular icon backdrop. */
+export const iconCircle: StyleMap = {
+  width: '80px',
+  height: '80px',
+  flexShrink: '0',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '36px',
+  lineHeight: '1',
+};
+
+export const iconCircleSuspicious: StyleMap = {
+  background: '#FFF3E0',
+};
+
+export const iconCircleHighRisk: StyleMap = {
+  background: '#FDECEA',
+};
+
+/** Right column: grid holding header (full width), reasons (left), actions (right). */
+export const contentGrid: StyleMap = {
+  flex: '1',
+  minWidth: '0',
+  display: 'grid',
+  gridTemplateColumns: '1fr auto',
+  columnGap: '20px',
+  rowGap: '10px',
+  alignItems: 'start',
 };
 
 export const bannerHeader: StyleMap = {
+  gridColumn: '1 / -1',
   display: 'flex',
   alignItems: 'center',
-  gap: '6px',
-  fontWeight: '600',
-  marginBottom: '6px',
+  gap: '8px',
+  fontWeight: '700',
+  fontSize: '16px',
+  lineHeight: '1.3',
+};
+
+export const headerSuspicious: StyleMap = {
+  color: '#E65100',
+};
+
+export const headerHighRisk: StyleMap = {
+  color: '#C62828',
 };
 
 export const reasonList: StyleMap = {
-  margin: '6px 0',
-  paddingLeft: '18px',
+  gridColumn: '1',
+  margin: '0',
+  paddingLeft: '20px',
+  listStyleType: 'disc',
+  fontSize: '14px',
+  color: '#424242',
+  lineHeight: '1.6',
 };
 
 export const reasonItem: StyleMap = {
-  marginBottom: '2px',
+  marginBottom: '4px',
 };
 
 export const affectedLink: StyleMap = {
   fontFamily: 'monospace',
   fontSize: '12px',
+  color: '#757575',
   wordBreak: 'break-all',
-  opacity: '0.85',
+  marginTop: '2px',
 };
 
-export const buttonRow: StyleMap = {
+/** Right-hand action column: stacked buttons + footer. */
+export const rightColumn: StyleMap = {
+  gridColumn: '2',
+  justifySelf: 'end',
+  minWidth: '160px',
   display: 'flex',
-  gap: '8px',
-  marginTop: '8px',
+  flexDirection: 'column',
+  gap: '12px',
 };
 
-export const button: StyleMap = {
-  padding: '4px 10px',
-  fontSize: '12px',
+export const buttonBase: StyleMap = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '6px',
+  width: '100%',
+  boxSizing: 'border-box',
+  padding: '10px 20px',
+  fontSize: '14px',
   fontFamily: 'inherit',
-  borderRadius: '4px',
-  border: '1px solid currentColor',
-  background: 'transparent',
-  color: 'inherit',
+  fontWeight: '600',
+  borderRadius: '8px',
   cursor: 'pointer',
+  whiteSpace: 'nowrap',
+  transition: 'background 0.15s ease, border-color 0.15s ease',
+};
+
+export const buttonMarkSafe: StyleMap = {
+  background: '#FFFFFF',
+  border: '1.5px solid #9E9E9E',
+  color: '#424242',
+};
+
+export const buttonMarkSafeHover: StyleMap = {
+  borderColor: '#616161',
+};
+
+export const buttonReport: StyleMap = {
+  background: '#C62828',
+  border: '1.5px solid #C62828',
+  color: '#FFFFFF',
+};
+
+export const buttonReportHover: StyleMap = {
+  background: '#A81E1E',
+  borderColor: '#A81E1E',
 };
 
 export const footer: StyleMap = {
-  marginTop: '8px',
-  fontSize: '11px',
-  opacity: '0.7',
+  fontSize: '12px',
+  color: '#9E9E9E',
+  textAlign: 'right',
+  marginTop: '4px',
 };
 
 // --- Pill -------------------------------------------------------------------

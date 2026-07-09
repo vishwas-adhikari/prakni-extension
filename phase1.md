@@ -497,3 +497,92 @@ Verified first: manifest never referenced it, and nothing imported it.
 - `npm run harness` / `npm test` unchanged from §1 (no logic touched).
 - Working tree: `M docs/schema.md`, `M webpack.config.js`, `D settings.html`, `D settings.ts` —
   left uncommitted for review.
+
+## Session — P1.5 Feature: Link Shield (Active Link Interception) (2026-07-09)
+
+Shipped the first *active* protection: instead of only warning about a malicious email,
+the extension now stops the user from reaching the phishing site when they click a flagged
+link. All of it lives inside Gmail's DOM — **zero new permissions**.
+
+### 1. Objective
+
+- **What it does:** intercepts clicks on links that the detection engine flagged as
+  malicious and redirects the user to a **local** warning page instead of the phishing site.
+- **Why it's P1, not P2:** unlike the P2 "Active Shield" (a password-field overlay injected
+  on *destination* sites, which needs broad host permissions), Link Shield operates entirely
+  within Gmail's own DOM with **no new permissions** — it rewrites `href` attributes and adds
+  capture-phase click listeners on the links Cred Mail already parsed.
+
+### 2. Architecture
+
+**Three-layer interception strategy** — each layer catches a different way of following a link:
+
+| Layer | Mechanism | Catches |
+| :-- | :-- | :-- |
+| a. **href rewrite** | flagged `<a>` tag's real `href` is swapped to `chrome-extension://[id]/warning.html?target=…` | right-click → open in new tab, copy link, drag |
+| b. **Capture-phase click listener** | `addEventListener('click', handler, true)` + `stopImmediatePropagation()` — fires **before** Gmail's own click handler | left-click |
+| c. **Visual indicator** | red dashed underline on flagged links | lets users *see* danger before clicking |
+
+- **Warning page:** a local extension page (`warning.html`) that shows the blocked URL, the
+  reasons it was flagged, a **"Back to Safety"** button, and a **3-second countdown**
+  "Proceed anyway" for users who insist.
+- **Restore mechanism:** `restoreLinks()` cleanly undoes everything when the user clicks
+  **Mark Safe** — restores the original `href`, removes the click listeners, and removes the
+  visual indicators.
+
+### 3. Files created
+
+- `packages/extension/public/warning.html` — minimal HTML shell.
+- `packages/extension/src/warning/warning.ts` — full warning-page UI (dark indigo background,
+  white card, red title, countdown "Proceed anyway" button).
+- `packages/extension/src/adapters/gmail/interceptor.ts` — `hijackBadLinks()` + `restoreLinks()`.
+
+### 4. Files modified
+
+- `src/adapters/gmail/index.ts` — import the interceptor; call `hijackBadLinks()` after render
+  on **both** the fresh-verdict and cache-hit paths; call `restoreLinks()` on **Mark Safe** and
+  on silent (safe) verdicts.
+- `src/adapters/shared/extract-links.ts` — exported `unwrapGoogleRedirect` for reuse
+  (was module-private, now shared with the interceptor).
+- `webpack.config.js` — added a `warning` entry point.
+- `manifest.json` — added `web_accessible_resources` for `warning.html` with an `<all_urls>`
+  match (an *accessibility* declaration, **not** a permission).
+
+### 5. Bugs encountered and fixed
+
+- **Gmail href bypass:** Gmail's internal JS click handler ignores the DOM `href` attribute and
+  navigates from its own data model, so a plain rewrite wasn't enough for left-click. Fixed by
+  adding the **capture-phase** click listener with `stopImmediatePropagation()` (Layer b).
+- **Google redirect unwrapping:** Gmail wraps every link through `google.com/url?q=…`. The
+  interceptor **unwraps** before matching against `affectedLinks`, but saves the **original
+  wrapped `href`** so restoration is exact.
+- **Warning page too aggressive:** initial full-bleed red (`#DC2626`) background read as alarmist
+  — changed to dark indigo (`#1E1B4B`) for a more professional feel.
+
+### 6. Design decisions
+
+- **href rewrite over `webRequest`/`webNavigation`:** no new permissions, no store-review risk,
+  no privacy concerns.
+- **Capture-phase listener (`true` flag):** guarantees Cred Mail fires before Gmail's
+  bubbling-phase handlers.
+- **Handler reference stored on the element (`__credmailHandler`):** enables clean, exact removal
+  in `restoreLinks()`.
+- **3-second countdown on "Proceed anyway":** prevents impulsive click-through.
+- **Unwrapped real URL passed as `?target=`** (not the Google wrapper): the warning page shows
+  the *actual* dangerous destination.
+- **`<all_urls>` in `web_accessible_resources`** (not a permission): supports middle-click /
+  new-tab navigation to the local warning page.
+
+### 7. Phase discipline note
+
+- This is **not** the P2 "Active Shield" (which monitors password fields on destination sites and
+  requires broad host permissions).
+- Renamed to **"Link Shield"** to avoid the naming collision.
+- P2 Active Shield remains a separate, future feature — **no P2 scope pulled forward**.
+
+### 8. Verification
+
+- `npm run build` → **zero errors**.
+- `npm run harness` → **0% FP, 100% catch** (core untouched — all changes are adapter/UI layer).
+- Chrome manual testing: left-click → warning page; right-click → copy → warning URL;
+  **Mark Safe** → links restored; safe emails unaffected.

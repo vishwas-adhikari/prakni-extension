@@ -7,15 +7,26 @@
 
 import {
   VerdictView,
+  StyleMap,
   bannerBase,
   bannerSuspicious,
   bannerHighRisk,
+  iconCircle,
+  iconCircleSuspicious,
+  iconCircleHighRisk,
+  contentGrid,
   bannerHeader,
+  headerSuspicious,
+  headerHighRisk,
   reasonList,
   reasonItem,
   affectedLink,
-  buttonRow,
-  button,
+  rightColumn,
+  buttonBase,
+  buttonMarkSafe,
+  buttonMarkSafeHover,
+  buttonReport,
+  buttonReportHover,
   footer,
 } from './styles';
 
@@ -34,10 +45,22 @@ function displayUrl(url: string): string {
   return stripped.length > LINK_MAX ? stripped.slice(0, LINK_MAX) + '…' : stripped;
 }
 
-function makeButton(label: string, onClick: () => void): HTMLButtonElement {
+function makeButton(
+  label: string,
+  variant: StyleMap,
+  hover: StyleMap,
+  onClick: () => void,
+): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.textContent = label;
-  Object.assign(btn.style, button);
+  Object.assign(btn.style, buttonBase, variant);
+  // CSP forbids :hover rules — repaint via JS listeners instead (skip once disabled).
+  btn.addEventListener('mouseenter', () => {
+    if (!btn.disabled) Object.assign(btn.style, hover);
+  });
+  btn.addEventListener('mouseleave', () => {
+    if (!btn.disabled) Object.assign(btn.style, variant);
+  });
   // Gmail swallows clicks on injected nodes — stop the event reaching its handlers.
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -61,11 +84,14 @@ function markSafe(
 ): void {
   transitioningBanners.add(container);
 
-  // Repaint green and strip the warning content.
+  // Repaint green and strip the warning content. Collapse the two-column flex
+  // layout to a simple block so the confirmation text reads left-to-right.
   Object.assign(banner.style, {
+    display: 'block',
     background: '#F0FDF4',
-    borderLeft: '4px solid #16A34A',
+    borderLeft: '5px solid #16A34A',
     color: '#166534',
+    padding: '16px 20px',
   });
   banner.textContent = '';
 
@@ -116,11 +142,21 @@ export function injectBanner(
   banner.setAttribute(BANNER_ATTR, '');
   Object.assign(banner.style, bannerBase, isHighRisk ? bannerHighRisk : bannerSuspicious);
 
-  // Header: icon + title with score.
+  // Left column: large circular icon.
+  const icon = document.createElement('div');
+  Object.assign(icon.style, iconCircle, isHighRisk ? iconCircleHighRisk : iconCircleSuspicious);
+  icon.textContent = isHighRisk ? '🚨' : '⚠️';
+  banner.appendChild(icon);
+
+  // Right column: grid of header (full width) + reasons (left) + actions (right).
+  const content = document.createElement('div');
+  Object.assign(content.style, contentGrid);
+
+  // Header: small icon + title with score.
   const header = document.createElement('div');
-  Object.assign(header.style, bannerHeader);
+  Object.assign(header.style, bannerHeader, isHighRisk ? headerHighRisk : headerSuspicious);
   header.textContent = `${isHighRisk ? '🚨' : '⚠️'} Potential Phishing Indicators Found (${verdict.score}/100)`;
-  banner.appendChild(header);
+  content.appendChild(header);
 
   // Reasons + any affected links.
   const list = document.createElement('ul');
@@ -137,35 +173,43 @@ export function injectBanner(
     }
     list.appendChild(li);
   }
-  banner.appendChild(list);
+  content.appendChild(list);
 
-  // Actions.
+  // Actions + footer, stacked in the right-hand column.
   const actions = document.createElement('div');
-  Object.assign(actions.style, buttonRow);
+  Object.assign(actions.style, rightColumn);
 
   actions.appendChild(
-    makeButton('Mark Safe', () => markSafe(banner, container, senderEmail, onMarkSafe)),
+    makeButton('✓ Mark Safe', buttonMarkSafe, buttonMarkSafeHover, () =>
+      markSafe(banner, container, senderEmail, onMarkSafe),
+    ),
   );
 
   // Report logs the first flagged link (query-stripped); P1 stub for the intake call.
   // No flagged links (e.g. content-only warning) → fall back to the sender address.
   const reportUrl = verdict.reasons.flatMap((r) => r.affectedLinks ?? [])[0] || senderEmail;
-  const reportBtn = makeButton('Report', () => {
+  const reportBtn = makeButton('🚩 Report', buttonReport, buttonReportHover, () => {
     console.log('[CredMail] Report:', reportUrl.split('?')[0]);
     onReport(senderEmail);
     reportBtn.disabled = true;
     reportBtn.textContent = '✓ Reported';
-    Object.assign(reportBtn.style, { background: '#E5E7EB', cursor: 'default' });
+    Object.assign(reportBtn.style, {
+      background: '#E5E7EB',
+      borderColor: '#E5E7EB',
+      color: '#757575',
+      cursor: 'default',
+    });
   });
   actions.appendChild(reportBtn);
-
-  banner.appendChild(actions);
 
   // Footer.
   const foot = document.createElement('div');
   Object.assign(foot.style, footer);
   foot.textContent = '🔒 Local analysis. No data sent to cloud.';
-  banner.appendChild(foot);
+  actions.appendChild(foot);
+
+  content.appendChild(actions);
+  banner.appendChild(content);
 
   container.insertBefore(banner, container.firstChild);
 }
