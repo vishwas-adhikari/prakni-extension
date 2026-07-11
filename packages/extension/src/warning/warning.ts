@@ -1,6 +1,6 @@
 // [P1.5] Link Shield warning page (extension context).
 //
-// Reached when the user opens a link that Cred Mail flagged: the Gmail adapter
+// Reached when the user opens a link that Prakni flagged: the Gmail adapter
 // rewrote that link's href to point here (see adapters/gmail/interceptor.ts).
 // Reads the intended destination from ?target= (the UNWRAPPED real URL) and the
 // verdict reasons from ?reasons= (a JSON string array). Full-screen soft block:
@@ -79,7 +79,7 @@ function render(): void {
 
   const subtext = document.createElement('p');
   subtext.textContent =
-    'Cred Mail prevented you from visiting a potentially malicious website that may ' +
+    'Prakni prevented you from visiting a potentially malicious website that may ' +
     'attempt to steal your passwords or install malware.';
   Object.assign(subtext.style, {
     fontSize: '15px',
@@ -233,15 +233,15 @@ function render(): void {
   });
 
   const footerLogo = document.createElement('img');
-  footerLogo.src = chrome.runtime.getURL('icons/credmail-final-removebg.png');
+  footerLogo.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
   Object.assign(footerLogo.style, {
-    width: '20px',
-    height: '20px',
+    width: '18px',
+    height: '18px',
     objectFit: 'contain',
   });
 
   const footerText = document.createElement('span');
-  footerText.textContent = 'Protected by Cred Mail · All analysis is local';
+  footerText.textContent = 'Protected by Prakni · All analysis is local';
 
   footer.append(footerLogo, footerText);
 

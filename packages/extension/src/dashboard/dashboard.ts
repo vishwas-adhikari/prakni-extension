@@ -259,8 +259,19 @@ async function render(): Promise<void> {
     padding: '14px 24px',
   });
   const brand = document.createElement('div');
-  brand.textContent = '🛡️  Cred Mail';
-  Object.assign(brand.style, { fontSize: '18px', fontWeight: '700' });
+  Object.assign(brand.style, { display: 'flex', alignItems: 'center', gap: '12px' });
+  const brandLogo = document.createElement('img');
+  brandLogo.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
+  Object.assign(brandLogo.style, { width: '60px', height: '60px', objectFit: 'contain' });
+  // Wordmark is dark text on transparent bg; invert to white for the dark header.
+  const brandWordmark = document.createElement('img');
+  brandWordmark.src = chrome.runtime.getURL('icons/wordmark_nobg.png');
+  Object.assign(brandWordmark.style, {
+    height: '70px',
+    objectFit: 'contain',
+    
+  });
+  brand.append(brandLogo, brandWordmark);
 
   const topRight = document.createElement('div');
   Object.assign(topRight.style, { display: 'flex', alignItems: 'center', gap: '10px' });
@@ -300,9 +311,9 @@ async function render(): Promise<void> {
   const protCard = createCard();
   const protRow = document.createElement('div');
   Object.assign(protRow.style, { display: 'flex', alignItems: 'center', gap: '14px' });
-  const shield = document.createElement('div');
-  shield.textContent = '🛡️';
-  shield.style.fontSize = '40px';
+  const shield = document.createElement('img');
+  shield.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
+  Object.assign(shield.style, { width: '44px', height: '44px', objectFit: 'contain' });
   const protText = document.createElement('div');
   Object.assign(protText.style, { flex: '1 1 auto', fontSize: '17px', fontWeight: '700' });
   const cardToggle = createToggleSwitch(isActive, (on) => void persistActive(on));
@@ -415,12 +426,12 @@ async function render(): Promise<void> {
   how.append(
     (() => {
       const t = document.createElement('div');
-      t.textContent = 'How Cred Mail Works';
+      t.textContent = 'How Prakni Works';
       Object.assign(t.style, { fontWeight: '600', fontSize: '13px', marginBottom: '4px' });
       return t;
     })(),
     muted(
-      'Cred Mail reads the sender, content, and links of an open email together and ' +
+      'Prakni reads the sender, content, and links of an open email together and ' +
         'warns only when independent signals agree it is suspicious. Most mail is safe, ' +
         'so it stays silent unless there is something worth flagging.',
     ),

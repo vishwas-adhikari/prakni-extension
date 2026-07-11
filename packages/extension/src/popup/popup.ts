@@ -62,18 +62,23 @@ async function render(): Promise<void> {
   Object.assign(header.style, {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '5px',
     background: THEME.colors.headerBg,
     color: THEME.colors.headerText,
-    padding: '16px',
+    padding: '10px 16px',
   });
-  const logo = document.createElement('div');
-  logo.textContent = '🛡️';
-  logo.style.fontSize = '22px';
-  const title = document.createElement('div');
-  title.textContent = 'Cred Mail';
-  Object.assign(title.style, { fontSize: '18px', fontWeight: '700' });
-  header.append(logo, title);
+  const logo = document.createElement('img');
+  logo.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
+  Object.assign(logo.style, { width: '58px', height: '58px', objectFit: 'contain' });
+  // Wordmark is dark text on transparent bg; invert to white for the dark header.
+  const wordmark = document.createElement('img');
+  wordmark.src = chrome.runtime.getURL('icons/wordmark_nobg.png');
+  Object.assign(wordmark.style, {
+    height: '52px',
+    objectFit: 'contain',
+  
+  });
+  header.append(logo, wordmark);
 
   // --- Body -----------------------------------------------------------------
   const body = document.createElement('div');
@@ -91,9 +96,9 @@ async function render(): Promise<void> {
     padding: '14px',
   });
 
-  const shield = document.createElement('div');
-  shield.textContent = '🛡️';
-  shield.style.fontSize = '28px';
+  const shield = document.createElement('img');
+  shield.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
+  Object.assign(shield.style, { width: '28px', height: '28px', objectFit: 'contain' });
 
   const statusText = document.createElement('div');
   Object.assign(statusText.style, { flex: '1 1 auto', fontWeight: '600', fontSize: '14px' });
