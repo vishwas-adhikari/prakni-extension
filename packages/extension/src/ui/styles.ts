@@ -30,8 +30,8 @@ export const bannerBase: StyleMap = {
   display: 'flex',
   flexDirection: 'row',
   alignItems: 'center',
-  gap: '20px',
-  padding: '20px 24px',
+  gap: '16px',
+  padding: '16px 20px',
   marginBottom: '16px',
   borderRadius: '12px',
   boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
@@ -51,25 +51,13 @@ export const bannerHighRisk: StyleMap = {
   borderLeft: '5px solid #C62828',
 };
 
-/** Left column: large circular icon backdrop. */
-export const iconCircle: StyleMap = {
-  width: '80px',
-  height: '80px',
+/** Left column: large circular icon (the PNG has its own circle baked in). */
+export const bannerIcon: StyleMap = {
+  width: '72px',
+  height: '72px',
+  objectFit: 'contain',
   flexShrink: '0',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '36px',
-  lineHeight: '1',
-};
-
-export const iconCircleSuspicious: StyleMap = {
-  background: '#FFF3E0',
-};
-
-export const iconCircleHighRisk: StyleMap = {
-  background: '#FDECEA',
+  alignSelf: 'center',
 };
 
 /** Right column: grid holding header (full width), reasons (left), actions (right). */
@@ -81,6 +69,8 @@ export const contentGrid: StyleMap = {
   columnGap: '20px',
   rowGap: '10px',
   alignItems: 'start',
+  borderLeft: '1px solid rgba(0,0,0,0.08)',
+  paddingLeft: '16px',
 };
 
 export const bannerHeader: StyleMap = {
@@ -103,12 +93,13 @@ export const headerHighRisk: StyleMap = {
 
 export const reasonList: StyleMap = {
   gridColumn: '1',
-  margin: '0',
+  marginTop: '8px',
+  marginBottom: '8px',
   paddingLeft: '20px',
   listStyleType: 'disc',
   fontSize: '14px',
   color: '#424242',
-  lineHeight: '1.6',
+  lineHeight: '1.7',
 };
 
 export const reasonItem: StyleMap = {
@@ -120,13 +111,14 @@ export const affectedLink: StyleMap = {
   fontSize: '12px',
   color: '#757575',
   wordBreak: 'break-all',
-  marginTop: '2px',
+  marginTop: '4px',
 };
 
 /** Right-hand action column: stacked buttons + footer. */
 export const rightColumn: StyleMap = {
   gridColumn: '2',
   justifySelf: 'end',
+  alignSelf: 'center',
   minWidth: '160px',
   display: 'flex',
   flexDirection: 'column',
@@ -139,6 +131,7 @@ export const buttonBase: StyleMap = {
   justifyContent: 'center',
   gap: '6px',
   width: '100%',
+  minWidth: '140px',
   boxSizing: 'border-box',
   padding: '10px 20px',
   fontSize: '14px',

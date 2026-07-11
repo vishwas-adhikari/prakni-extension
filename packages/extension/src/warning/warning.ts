@@ -222,12 +222,28 @@ function render(): void {
 
   // --- Footer ---------------------------------------------------------------
   const footer = document.createElement('div');
-  footer.textContent = 'Protected by Cred Mail · All analysis is local';
   Object.assign(footer.style, {
     marginTop: '24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
     fontSize: '12px',
     color: '#9CA3AF',
   });
+
+  const footerLogo = document.createElement('img');
+  footerLogo.src = chrome.runtime.getURL('icons/credmail-final-removebg.png');
+  Object.assign(footerLogo.style, {
+    width: '20px',
+    height: '20px',
+    objectFit: 'contain',
+  });
+
+  const footerText = document.createElement('span');
+  footerText.textContent = 'Protected by Cred Mail · All analysis is local';
+
+  footer.append(footerLogo, footerText);
 
   document.body.append(card, footer);
 }

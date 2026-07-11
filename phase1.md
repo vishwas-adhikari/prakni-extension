@@ -586,3 +586,94 @@ link. All of it lives inside Gmail's DOM — **zero new permissions**.
 - `npm run harness` → **0% FP, 100% catch** (core untouched — all changes are adapter/UI layer).
 - Chrome manual testing: left-click → warning page; right-click → copy → warning URL;
   **Mark Safe** → links restored; safe emails unaffected.
+
+---
+
+## Session — P1.6: Reading-Pane Banner Redesign (2026-07-10)
+
+> A **pure presentation** change: the reading-pane warning banner was restyled from a single
+> stacked card into a professional two-column layout. **Zero** detection, adapter, wiring, or
+> data-flow changes — only `src/ui/banner.ts` (DOM assembly) and `src/ui/styles.ts` (style
+> objects) were touched. Every existing behaviour was preserved.
+
+### 1. Objective
+
+Replace the flat banner (colored left-border card → header → reasons → buttons → footer, all
+stacked) with a cleaner **two-column grid** layout that reads as a designed component rather
+than a debug strip, while keeping the extension's CSP discipline and all interaction logic
+intact.
+
+### 2. New layout
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  ╭──────╮   ⚠️ Potential Phishing Indicators Found (72/100) │  ← header (spans full width)
+│  │  ⚠️  │   • reason one                     ┌────────────┐ │
+│  │ 80px │   • reason two                     │ ✓ Mark Safe│ │  ← reasons (1fr) | actions (auto)
+│  ╰──────╯     link.example.com/…             ├────────────┤ │
+│                                              │  🚩 Report │ │
+│                                              └────────────┘ │
+│                              🔒 Local analysis. No data sent │  ← footer (right-aligned)
+└────────────────────────────────────────────────────────────┘
+```
+
+- **Outer container** — flex row: `[icon circle] [content]`, `gap 20px`, `padding 20px 24px`,
+  `border-radius 12px`, `box-shadow 0 2px 8px rgba(0,0,0,0.06)`, `margin-bottom 16px`,
+  `5px` colored left border.
+  - Suspicious: bg `#FFF8F0` (warm cream), border `#FF9800`.
+  - High Risk: bg `#FFF0F0` (light pink), border `#C62828`.
+- **Left column** — an 80×80 circular icon backdrop (`border-radius 50%`, 36px emoji):
+  Suspicious `#FFF3E0` + ⚠️; High Risk `#FDECEA` + 🚨.
+- **Right column** — a CSS **grid** (`grid-template-columns: 1fr auto`):
+  - **Header** spans both columns (`grid-column: 1 / -1`): small icon + title with score,
+    16px / weight 700, colored `#E65100` (Suspicious) or `#C62828` (High Risk).
+  - **Reasons** (`1fr`, left): bulleted list, 14px `#424242`, line-height 1.6; affected links
+    below each reason in monospace `#757575` (query-stripped + 60-char truncated, unchanged).
+  - **Actions** (`auto`, right, min-width 160px): stacked **✓ Mark Safe** (white, 1.5px grey
+    border, dark-grey text) and **🚩 Report** (solid `#C62828`, white text), `border-radius 8px`,
+    `padding 10px 20px`; **footer** below them, right-aligned, 12px `#9E9E9E`.
+
+### 3. Files changed
+
+- **`src/ui/styles.ts`** — rewrote the entire `--- Banner ---` block. `bannerBase` became a flex
+  row; the risk colour maps now carry only `background` + `border-left`. Added `iconCircle`
+  (+ suspicious/high-risk backdrops), `contentGrid`, `headerSuspicious`/`headerHighRisk` (header
+  text colour split out of the container), `rightColumn`, `buttonBase` + `buttonMarkSafe`/
+  `buttonReport` variants and their `*Hover` patches. `reasonList`/`affectedLink`/`footer`
+  restyled (muted greys, line-height, right-aligned footer). Removed the now-dead `button` and
+  `buttonRow` exports. **Pill styles left untouched.**
+- **`src/ui/banner.ts`** — reworked `injectBanner`'s DOM assembly into
+  `[icon circle] → [contentGrid: header / reasons / rightColumn(buttons + footer)]`.
+  `makeButton` now takes `(label, variant, hover, onClick)` and paints hover states via
+  `mouseenter`/`mouseleave` `Object.assign` (see §5). `markSafe` collapses the flex layout to
+  `display: block` on the green morph so the confirmation text reads left-to-right.
+
+### 4. Behaviour preserved (nothing regressed)
+
+- **Mark Safe** → `onMarkSafe` callback → green transition → 2s hold → fade out (+ pill removal).
+- **Report** → `onReport` callback → button disables and transforms to `✓ Reported` (now greys
+  out background **and** border/text to match the new solid style).
+- Idempotent injection via `data-credmail-banner`; the `transitioningBanners` Set guard against a
+  re-score yanking the green banner mid-fade; silent (Safe) verdict removes the banner.
+- Privacy: affected links still query-stripped (`url.split('?')[0]`) and truncated to 60 chars.
+
+### 5. CSP discipline held
+
+- **No `:hover` CSS** — MV3 forbids `<style>`/CSS strings, so hover is done with
+  `mouseenter`/`mouseleave` listeners that `Object.assign` a hover patch (and skip once the
+  button is `disabled`, so a reported button doesn't repaint).
+- All styling via `Object.assign(el.style, …)` with camelCase keys; every node via
+  `createElement` + `textContent`; **no `innerHTML`, no CSS files, no `classList`.**
+
+### 6. Verification
+
+- `npx tsc -p packages/extension/tsconfig.json --noEmit` → **exit 0** (the real UI compile check —
+  webpack alone only compiles what an entry reaches; banner.ts is reachable here via the wiring).
+- `npm run build` → **green** (`webpack compiled successfully`); `content_gmail` bundle rebuilt.
+- **No harness re-run needed** — detection engine untouched; this is UI-only. The P0/P1 corpus
+  numbers (0% FP, 100% catch) stand unchanged.
+
+### 7. Scope note
+
+`index.ts`, `interceptor.ts`, `pill.ts`, the adapters, and core were **not** touched — the change
+is confined to the two UI files, so the redesign is fully reversible without touching any logic.

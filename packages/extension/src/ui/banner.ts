@@ -11,9 +11,7 @@ import {
   bannerBase,
   bannerSuspicious,
   bannerHighRisk,
-  iconCircle,
-  iconCircleSuspicious,
-  iconCircleHighRisk,
+  bannerIcon,
   contentGrid,
   bannerHeader,
   headerSuspicious,
@@ -84,25 +82,76 @@ function markSafe(
 ): void {
   transitioningBanners.add(container);
 
-  // Repaint green and strip the warning content. Collapse the two-column flex
-  // layout to a simple block so the confirmation text reads left-to-right.
+  // Repaint into a spacious green confirmation, keeping the flex row so the green
+  // "safe" shield sits beside the confirmation text. Reuse the existing icon <img>,
+  // swapped to w3c.png (stay an image — never fall back to an emoji).
+  const icon = banner.querySelector('img');
   Object.assign(banner.style, {
-    display: 'block',
     background: '#F0FDF4',
+    border: '1px solid #BBF7D0',
     borderLeft: '5px solid #16A34A',
+    borderRadius: '12px',
     color: '#166534',
-    padding: '16px 20px',
+    padding: '24px 28px',
+    minHeight: '100px',
   });
   banner.textContent = '';
+  if (icon) {
+    icon.src = chrome.runtime.getURL('icons/w3c.png');
+    Object.assign(icon.style, { width: '80px', height: '80px' });
+    banner.appendChild(icon);
+  }
+
+  // Content column: subtle green-tinted separator, matching the warning layout.
+  const content = document.createElement('div');
+  Object.assign(content.style, {
+    flex: '1',
+    minWidth: '0',
+    borderLeft: '1px solid rgba(0,0,0,0.06)',
+    paddingLeft: '20px',
+  });
 
   const header = document.createElement('div');
-  Object.assign(header.style, bannerHeader);
+  Object.assign(header.style, {
+    fontSize: '20px',
+    fontWeight: '700',
+    color: '#166534',
+    marginBottom: '8px',
+  });
   header.textContent = '✅ Marked Safe';
-  banner.appendChild(header);
+  content.appendChild(header);
 
   const note = document.createElement('div');
+  Object.assign(note.style, {
+    fontSize: '15px',
+    color: '#374151',
+    lineHeight: '1.5',
+  });
   note.textContent = 'This sender has been added to your trusted list.';
-  banner.appendChild(note);
+  content.appendChild(note);
+
+  // Footer: product logo + local-analysis assurance, bottom-right.
+  const foot = document.createElement('div');
+  Object.assign(foot.style, {
+    marginTop: '12px',
+    textAlign: 'right',
+    fontSize: '12px',
+    color: '#66BB6A',
+  });
+  const footLogo = document.createElement('img');
+  footLogo.src = chrome.runtime.getURL('icons/credmail-final-removebg.png');
+  Object.assign(footLogo.style, {
+    width: '16px',
+    height: '16px',
+    objectFit: 'contain',
+    verticalAlign: 'middle',
+    marginRight: '6px',
+  });
+  foot.appendChild(footLogo);
+  foot.appendChild(document.createTextNode('🔒 Local analysis. No data sent to cloud.'));
+  content.appendChild(foot);
+
+  banner.appendChild(content);
 
   // Dumb UI: pass the full address up; the adapter routes domain vs. contact.
   onMarkSafe(senderEmail);
@@ -142,10 +191,10 @@ export function injectBanner(
   banner.setAttribute(BANNER_ATTR, '');
   Object.assign(banner.style, bannerBase, isHighRisk ? bannerHighRisk : bannerSuspicious);
 
-  // Left column: large circular icon.
-  const icon = document.createElement('div');
-  Object.assign(icon.style, iconCircle, isHighRisk ? iconCircleHighRisk : iconCircleSuspicious);
-  icon.textContent = isHighRisk ? '🚨' : '⚠️';
+  // Left column: large circular icon image (the PNG has the circle baked in).
+  const icon = document.createElement('img');
+  icon.src = chrome.runtime.getURL(isHighRisk ? 'icons/w2c.png' : 'icons/w1c.png');
+  Object.assign(icon.style, bannerIcon);
   banner.appendChild(icon);
 
   // Right column: grid of header (full width) + reasons (left) + actions (right).
@@ -202,10 +251,20 @@ export function injectBanner(
   });
   actions.appendChild(reportBtn);
 
-  // Footer.
+  // Footer: product logo + local-analysis assurance.
   const foot = document.createElement('div');
   Object.assign(foot.style, footer);
-  foot.textContent = '🔒 Local analysis. No data sent to cloud.';
+  const logo = document.createElement('img');
+  logo.src = chrome.runtime.getURL('icons/credmail-final-removebg.png');
+  Object.assign(logo.style, {
+    width: '16px',
+    height: '16px',
+    objectFit: 'contain',
+    verticalAlign: 'middle',
+    marginRight: '6px',
+  });
+  foot.appendChild(logo);
+  foot.appendChild(document.createTextNode('🔒 Local analysis. No data sent to cloud.'));
   actions.appendChild(foot);
 
   content.appendChild(actions);
