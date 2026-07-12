@@ -11,11 +11,15 @@
     "test": "jest",
     "harness": "ts-node packages/core/test/corpus/harness.ts",
     "typecheck": "tsc -p packages/core/tsconfig.json --noEmit",
-    "build": "npm run build -w @credmail/extension"
+    "build:chrome": "npm run build:chrome -w @credmail/extension",
+    "build:firefox": "npm run build:firefox -w @credmail/extension",
+    "build": "npm run build:chrome -w @credmail/extension && npm run build:firefox -w @credmail/extension",
+    "package": "node scripts/package.js"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.0",
+    "archiver": "^7.0.1",
     "jest": "^29.7.0",
     "ts-jest": "^29.2.0",
     "ts-node": "^10.9.2",

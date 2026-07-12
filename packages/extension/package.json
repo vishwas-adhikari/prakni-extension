@@ -5,7 +5,9 @@
   "description": "Cred Mail browser extension — Chromium + Gmail (P1).",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "webpack"
+    "build:chrome": "webpack --env target=chrome",
+    "build:firefox": "webpack --env target=firefox",
+    "build": "npm run build:chrome && npm run build:firefox"
   },
   "dependencies": {
     "@credmail/core": "*",

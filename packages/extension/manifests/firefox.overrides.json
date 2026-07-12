@@ -1,0 +1,12 @@
+{
+  "background": {
+    "service_worker": null,
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "prakni@prakni.app",
+      "strict_min_version": "109.0"
+    }
+  }
+}
