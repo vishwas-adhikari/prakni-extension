@@ -677,3 +677,71 @@ intact.
 
 `index.ts`, `interceptor.ts`, `pill.ts`, the adapters, and core were **not** touched — the change
 is confined to the two UI files, so the redesign is fully reversible without touching any logic.
+
+---
+
+## Session — Rebrand: Cred Mail → Prakni (2026-07-11)
+
+> A **branding-only** change (`commit f507ba5`): the product's user-facing name became **"Prakni"**
+> and the emoji-shield placeholder identity (🛡️) was replaced with real logo/wordmark image assets.
+> **Zero** detection, adapter, wiring, privacy, or data-flow changes — every edit is a string swap,
+> an image asset, or a small layout tweak to seat the new logo. All P0/P1 corpus numbers stand.
+
+### 1. Objective
+
+Retire the working name **"Cred Mail"** and its placeholder 🛡️ emoji across every surface a user
+can see — manifest, popup, dashboard, Link Shield warning page, README — and swap in the finished
+**Prakni** logo + wordmark image assets. No logic touched.
+
+### 2. New image assets (added to `packages/extension/public/icons/`)
+
+- **`prakni_logo_nobg.png`** (~136 KB) — the primary transparent-background logo mark. Now serves as
+  the manifest icon at **all three sizes** (16/48/128) and as the in-UI logo everywhere the 🛡️ emoji
+  used to be.
+- **`wordmark_nobg.png`** (~47 KB) — the "Prakni" text wordmark (dark text, transparent bg), placed
+  next to the logo in the popup and dashboard headers.
+- **`old.png`** (~40 KB) — the retired mark, kept in-tree for reference.
+
+### 3. Files changed (8 files, +50 / −34)
+
+- **`packages/extension/manifest.json`**
+  - `name`: `"Cred Mail"` → `"Prakni"`.
+  - `description`: prefixed with `"Prakni — …"`.
+  - `action.default_icon` and top-level `icons` (16/48/128): all repointed from the old
+    `icon16/48/128.png` set to `icons/prakni_logo_nobg.png`.
+- **`packages/extension/src/popup/popup.ts`**
+  - Header 🛡️ emoji + text title replaced with two `<img>` elements: `prakni_logo_nobg.png`
+    (58×58) + `wordmark_nobg.png` (height 52). Header padding tightened to `10px 16px`, gap `5px`.
+  - Status-row shield 🛡️ (28px emoji) → `prakni_logo_nobg.png` `<img>` (28×28).
+- **`packages/extension/src/dashboard/dashboard.ts`**
+  - Top-bar brand 🛡️ + text → logo (60×60) + wordmark (height 70) `<img>` pair in a flex row.
+  - Protection-card shield 🛡️ (40px emoji) → `prakni_logo_nobg.png` `<img>` (44×44).
+  - Copy: "How **Cred Mail** Works" → "How **Prakni** Works"; body paragraph "Cred Mail reads…" →
+    "Prakni reads…".
+- **`packages/extension/src/warning/warning.ts`** (Link Shield page)
+  - Two body/subtext mentions of "Cred Mail" → "Prakni" (incl. the header code comment).
+  - Footer logo repointed `credmail-final-removebg.png` → `prakni_logo_nobg.png` (resized 20→18px);
+    footer text "Protected by **Cred Mail**" → "Protected by **Prakni**".
+- **`README.md`** — H1 title `# Cred Mail` → `# Prakni`.
+
+### 4. Notes / caveats
+
+- **CSP discipline held:** all logos injected via `chrome.runtime.getURL(...)` + `<img>` +
+  `Object.assign` styles — no `innerHTML`, no CSS files. Consistent with the banner/UI conventions.
+- **Wordmark colour caveat:** the wordmark is dark text on a transparent bg dropped onto the dark
+  headers. Code comments in popup/dashboard flag an intent to "invert to white for the dark header,"
+  but **no inversion filter is actually applied** — the `Object.assign` blocks for the wordmark are
+  empty (stray trailing whitespace only). Legibility on the dark header should be eyeballed; a
+  `filter: invert(1)` (or a pre-inverted white asset) may still be needed. **Follow-up candidate.**
+- **Not renamed:** internal identifiers remain `credmail` — `data-credmail-banner`, the
+  `__credmailHandler` element property, package/dir names, telemetry keys, and `CLAUDE.md` /
+  `docs/*` all still say "Cred Mail". This was a **user-facing** rebrand only; the internal namespace
+  rename (if wanted) is a separate, larger task.
+- The old `icon16/48/128.png` files are no longer referenced by the manifest but were not deleted.
+
+### 5. Verification
+
+- This was committed as a branding pass; **detection engine untouched**, so the P0/P1 corpus numbers
+  (**0% FP, 100% catch**) carry over unchanged — no harness re-run required.
+- Recommend a quick manual Chrome load to confirm the new logo/wordmark render crisply in the popup
+  and dashboard headers (see the wordmark-inversion caveat in §4).
