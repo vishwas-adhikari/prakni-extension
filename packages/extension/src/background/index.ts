@@ -1,7 +1,7 @@
 // [P1] MV3 service worker entry. Event-driven; may sleep at ~30s. All persistent state
 // lives in chrome.storage.local (see ../storage/local-state), never in worker globals.
 
-import { initState } from '../storage/local-state';
+import { getState, initState } from '../storage/local-state';
 import { runOtaSync } from './ota-sync';
 import { handleTelemetryMessage, isTelemetryMessage } from './telemetry';
 
@@ -21,7 +21,12 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 // 12-hour OTA refresh cycle.
 chrome.alarms.onAlarm.addListener(async (alarm) => {
-  if (alarm.name === OTA_ALARM) {
+  if (alarm.name !== OTA_ALARM) return;
+  await runOtaSync();
+  // Self-heal: if selectors are still missing (e.g. a networked sync failed in a future
+  // version), retry now rather than leaving extraction degraded until the next 12h cycle.
+  const { dom_selectors } = await getState();
+  if (!dom_selectors || Object.keys(dom_selectors).length === 0) {
     await runOtaSync();
   }
 });

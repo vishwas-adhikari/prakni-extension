@@ -40,12 +40,16 @@ export async function initState(): Promise<void> {
   await chrome.storage.local.set({ ...DEFAULTS, ...stored });
 }
 
-/** Full state, with defaults filled in for any key not yet persisted. */
+/**
+ * Full state, always merged over DEFAULTS. Even if storage is cleared or corrupted, this
+ * returns a complete, sane LocalState rather than a partial object that would crash
+ * consumers on a missing key (cold-start hardening).
+ */
 export async function getState(): Promise<LocalState> {
-  const stored = await chrome.storage.local.get(
+  const data = await chrome.storage.local.get(
     DEFAULTS as unknown as Record<string, unknown>,
   );
-  return stored as unknown as LocalState;
+  return { ...DEFAULTS, ...data } as LocalState;
 }
 
 /** Shallow-merge a partial update into stored state. */
