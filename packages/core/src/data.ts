@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // Single place that reaches across the package boundary into /data.
 // Keeping the relative path here means the rest of core imports plain symbols.
 import trustedDomains from "../../../data/trusted-domains.json";

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Full-page dashboard (opens in its own tab). Protection status, trusted-domain
 // and blocked-sender management, detection sensitivity, and about/privacy.
 // A normal extension page: styles via Object.assign, nodes via createElement +
@@ -446,6 +447,28 @@ async function render(): Promise<void> {
       return t;
     })(),
     muted('All analysis happens on your device. Email content is never sent to any server.'),
+    (() => {
+      const link = document.createElement('a');
+      link.textContent = 'Read our full Privacy Policy →';
+      link.href = 'https://kanthiralabs.github.io/prakni-privacy/';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      Object.assign(link.style, {
+        display: 'inline-block',
+        marginTop: '6px',
+        color: '#4F46E5',
+        fontSize: '13px',
+        textDecoration: 'none',
+        fontWeight: '600',
+      });
+      link.addEventListener('mouseenter', () => {
+        link.style.textDecoration = 'underline';
+      });
+      link.addEventListener('mouseleave', () => {
+        link.style.textDecoration = 'none';
+      });
+      return link;
+    })(),
   );
 
   const meta = document.createElement('div');
@@ -461,11 +484,19 @@ async function render(): Promise<void> {
   ver.textContent = `Version ${VERSION}`;
   const bug = document.createElement('a');
   bug.textContent = 'Report a Bug';
-  bug.href = 'mailto:support@credmail.app';
+  bug.href = 'mailto:support@kanthira.com';
   bug.style.color = THEME.colors.primary;
   meta.append(ver, bug);
 
-  aboutCard.append(how, privacy, meta);
+  const copyright = document.createElement('div');
+  copyright.textContent = '© 2026 KanthiraLabs. All rights reserved.';
+  Object.assign(copyright.style, {
+    marginTop: '14px',
+    fontSize: '12px',
+    color: THEME.colors.textSecondary,
+  });
+
+  aboutCard.append(how, privacy, meta, copyright);
 
   // --- Lists ----------------------------------------------------------------
   const trustedCard = listSection({

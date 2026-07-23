@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Gmail open-email observer (docs/dom-resilience.md "Algorithm").
 //
 // Gmail is a single-page app: the URL hash changes 300-1000ms BEFORE the message

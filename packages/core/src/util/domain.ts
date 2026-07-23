@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // Pure domain/URL helpers. No DOM, no network — just string parsing.
 import { ESP_DOMAINS, TRUSTED_DOMAINS } from "../data";
 

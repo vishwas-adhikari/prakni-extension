@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] UI styles + the local verdict shape the UI renders.
 //
 // CSP discipline (CLAUDE.md "MV3", docs/design.md "Style isolation"): every style

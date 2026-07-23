@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Gmail content script entry. Observe → extract → score → render, on-device.
 //
 // State pass-through (trap B): the core engine is pure and cannot read

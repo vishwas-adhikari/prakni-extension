@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Extraction confidence check (docs/dom-resilience.md, Layer 2).
 //
 // Heuristics fail SILENTLY — they grab a footer or a quoted thread and hand the

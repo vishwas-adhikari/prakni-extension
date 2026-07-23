@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { EmailData } from "../types";
 import { TRUSTED_DOMAINS } from "../data";
 import { domainFromEmail, registrableDomain } from "../util/domain";

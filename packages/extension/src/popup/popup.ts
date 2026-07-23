@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Popup — quick access from the extension icon (~350x450).
 // Protection toggle + this-session stats + a button to the full dashboard.
 // All styling via Object.assign, all nodes via createElement + textContent.
@@ -150,7 +151,7 @@ async function render(): Promise<void> {
 
   // --- Footer ---------------------------------------------------------------
   const footer = document.createElement('div');
-  footer.textContent = `v${VERSION} · All analysis is local`;
+  footer.textContent = `v${VERSION} · © 2026 KanthiraLabs`;
   Object.assign(footer.style, {
     padding: '12px 16px',
     fontSize: '11px',

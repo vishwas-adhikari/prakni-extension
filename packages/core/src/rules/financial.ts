@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { EmailData, RuleResult } from "../types";
 
 // Weak signal: financial lures. Present in plenty of legitimate mail, so low

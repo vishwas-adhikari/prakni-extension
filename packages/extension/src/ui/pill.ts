@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Inbox-list pill (docs/design.md "Inbox list pill"). Suspicious+ only — Safe
 // rows get nothing (the prototype's over-pilling mistake is exactly what we remove).
 //

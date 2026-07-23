@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Shared visual theme + UI primitives for the popup and dashboard pages.
 //
 // These are normal extension pages (not injected into Gmail), but we keep the same

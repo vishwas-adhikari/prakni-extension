@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Shared text normalization for adapter extraction.
 //
 // Webmail bodies arrive padded with zero-width / invisible characters — a known

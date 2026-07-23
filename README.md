@@ -1,4 +1,4 @@
-# Prakni
+A# Prakni
 
 Privacy-first phishing warning that runs locally inside webmail. It reads sender + content +
 links together, warns only when something is wrong, and never sends email data to a server.

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] MV3 service worker entry. Event-driven; may sleep at ~30s. All persistent state
 // lives in chrome.storage.local (see ../storage/local-state), never in worker globals.
 

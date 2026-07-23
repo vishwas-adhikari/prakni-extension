@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Gmail parser: DOM → EmailData (docs/dom-resilience.md).
 //
 // Layer 1 — OTA selectors (querySelector, FIRST match per field).

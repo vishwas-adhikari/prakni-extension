@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { EmailData, RuleResult } from "../types";
 import { BRANDS } from "../data";
 import { mentionedBrands } from "../util/text";

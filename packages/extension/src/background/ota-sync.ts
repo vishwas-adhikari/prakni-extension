@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] OTA selector sync.
 //
 // Layer 1 of the self-healing extraction system (docs/dom-resilience.md): DOM selectors

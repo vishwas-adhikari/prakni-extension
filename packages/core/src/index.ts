@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { EmailData, ScoringConfig, Verdict } from "./types";
 import { DEFAULT_CONFIG } from "./config";
 import { runTrustGate } from "./trust";

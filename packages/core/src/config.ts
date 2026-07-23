@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { ScoringConfig } from "./types";
 
 // Default scoring thresholds. These are OTA-tunable at runtime (docs/detection.md);

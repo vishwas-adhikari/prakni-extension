@@ -77,7 +77,7 @@ Prakni does not knowingly collect data from children under the age of 13.
 
 ## 10. Contact
 
-Questions about this policy? Email us at **support@prakni.app**.
+Questions about this policy? Email us at **support@kanthira.com**.
 
 ## 11. Changes to this policy
 

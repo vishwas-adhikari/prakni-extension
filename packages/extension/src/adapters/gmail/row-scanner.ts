@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Lightweight inbox-row scanner — DELIBERATELY ISOLATED from the detection
 // pipeline. It does NOT touch core, the parser, the open-email observer, the cache,
 // the storage wrapper, or the banner/pill modules. It reads three cheap signals off

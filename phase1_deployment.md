@@ -323,3 +323,153 @@ The structure is extensible with no code changes to the merge or webpack beyond 
 
 Safari specifically is a *packaging step on top of* a standard build (`safari-web-extension-converter`,
 macOS + Xcode) — see `docs/build-and-targets.md §3`.
+
+---
+---
+
+# Part II — Pre-submission hardening & branding (2026-07-12)
+
+Everything in Part I got us *two building, packaging artifacts*. Part II makes them *submittable*:
+the compliance docs a store review demands, a cold-start robustness pass, a first `1.0.0` version,
+and a full brand-reference audit + cleanup (contact email + privacy-policy links) before going live.
+
+---
+
+## 11. Store-submission docs + cold-start hardening + v1.0.0
+
+A single "final pre-submission cleanup" pass. **No detection / UI / adapter logic touched** — only
+docs, the storage/background robustness fixes, and the version string.
+
+### 11.1 Compliance docs created
+
+- **`PRIVACY.md`** (project root) — plain-English privacy policy, 11 sections. The core claim
+  ("operates entirely offline, nothing transmitted") was **verified true before writing**:
+  a grep for `fetch`/`XMLHttpRequest`/`sendBeacon`/`WebSocket` across `packages/extension/src`
+  returned **zero** hits; `telemetry.ts` only `console.log`s; `ota-sync.ts` reads a bundled local
+  JSON (`gmail-selectors.json`), no network. Evidence-before-claims, per CLAUDE.md.
+- **`docs/permissions-justification.md`** — ready-to-paste Chrome Web Store text for each manifest
+  declaration: `storage`, `alarms`, the Gmail host permission (declared via the `content_scripts`
+  match, not a `permissions` entry), and `web_accessible_resources`.
+- **`docs/store-listing.md`** — title, 132-char short description, full description, category
+  (Productivity), language (English) for both Chrome Web Store and AMO.
+
+### 11.2 Cold-start hardening (2 source edits)
+
+The extension must survive a cleared or corrupted `chrome.storage.local` (a store reviewer will
+open DevTools and run `chrome.storage.local.clear()`), so:
+
+- **`packages/extension/src/storage/local-state.ts` — `getState()`** now always merges over
+  `DEFAULTS`:
+  ```ts
+  const data = await chrome.storage.local.get(DEFAULTS as unknown as Record<string, unknown>);
+  return { ...DEFAULTS, ...data } as LocalState;
+  ```
+  Even a wiped store yields a complete `LocalState` instead of a partial object that would crash
+  consumers on a missing key. (`get(DEFAULTS)` already fills absent keys; the explicit spread is
+  defensive belt-and-suspenders.)
+- **`packages/extension/src/background/index.ts` — alarm handler** self-heals: after the periodic
+  `runOtaSync()`, it re-reads state and, if `dom_selectors` is empty/missing, runs **one** immediate
+  recovery sync instead of waiting the full 12h cycle (added a `getState` import; bounded single
+  retry, no loop).
+  > *Forward-looking:* in P1 `runOtaSync` reads a bundled JSON and always succeeds, so the guard
+  > never fires today — it's a safety net for the P3 networked sync.
+
+### 11.3 Version bump → 1.0.0
+
+- `packages/extension/manifest.json`: `"version": "0.1.0"` → **`"1.0.0"`** (first public release).
+- Deleted the stale `prakni-*-v0.1.0.zip` (orphaned by the bump) and re-ran `npm run package`.
+
+### 11.4 Verification
+
+- `npm run build` → both targets **compiled successfully**, 0 errors.
+- Both `dist/*/manifest.json` show `"version": "1.0.0"`.
+- `npm run package` → `prakni-chrome-v1.0.0.zip` (~560.0 KB) + `prakni-firefox-v1.0.0.zip`
+  (~560.1 KB), **0 `.map` files** inside either.
+- Guardrail: only `manifest.json`, `background/index.ts`, `storage/local-state.ts` changed under
+  `packages/`.
+
+---
+
+## 12. Brand-reference audit (read-only)
+
+Before launch, a full sweep for stray old-brand identifiers and anything that must be *owned*
+(domains, mailboxes). Searched the entire codebase (excluding `node_modules`/`dist`) for: `credmail`
+(case-insensitive), `@credmail`, `prakni.app`, `kanthira`, `mailto:`, and website/support URLs.
+
+**Key findings:**
+
+- **3 user-facing old-brand leftovers** that ship in the extension:
+  - `dashboard.ts` — a `mailto:support@credmail.app` "Report a Bug" link (old-brand email).
+  - `banner.ts` (×2) — footer logo referencing `icons/credmail-final-removebg.png` (old-brand asset
+    filename; byte-identical to `prakni_logo_nobg.png`, so it *looks* fine, but the reference is
+    stale).
+- **`@credmail/*`** — every hit is the internal **npm workspace scope** (package names, imports),
+  **not** email or branding. Left untouched intentionally (internal rename is a separate, larger job).
+- **`data-credmail-*` attributes** and **`[CredMail]` console prefixes** — internal/functional, not
+  user-visible text.
+- **`kanthira`** — **zero** matches anywhere; the name was free to adopt.
+- **No website/support URL existed anywhere** in code (no `homepage_url` in the manifest, no "visit
+  website" link). The only `http(s)` URL in source is the manifest's `https://mail.google.com/*`
+  content-script match.
+- Test-corpus phishing addresses (`support@paypa1.com`, etc.) and detection lists (`brands.json`)
+  are **not ours** — excluded.
+
+Outcome: a punch-list of exactly what to reconcile (contact email, privacy URL) before submission.
+
+---
+
+## 13. Email & website reference cleanup
+
+Applied **only** email/website reference changes from the audit — no package names, imports, console
+prefixes, `data-credmail-*` attributes, or manifest changes.
+
+| File | Change | Count |
+|---|---|---|
+| `packages/extension/src/dashboard/dashboard.ts` | `mailto:support@credmail.app` → `mailto:support@kanthira.com` | 1 |
+| `PRIVACY.md` | Contact `support@prakni.app` → `support@kanthira.com` | 1 |
+| `docs/store-listing.md` | Added **Privacy policy URL** section → `https://kanthiralabs.github.io/prakni-privacy/` | +1 |
+| `docs/permissions-justification.md` | No `credmail` references present | 0 |
+
+- **`credmail.app` existed in exactly one place** (the dashboard mailto), so the two requested rules
+  ("`support@credmail.app` →" and "`credmail.app` →") collapsed to that single edit — there was no
+  standalone website URL to repoint.
+- New identifiers to make live before launch: **`support@kanthira.com`** mailbox and the
+  **`https://kanthiralabs.github.io/prakni-privacy/`** page (host `PRIVACY.md` there).
+
+Post-change grep: **0** remaining `support@credmail` / `credmail.app` / `support@prakni`; all 3 new
+`kanthira` references present. `npm run package` rebuilt clean (v1.0.0 ZIPs regenerated).
+
+---
+
+## 14. Dashboard "Privacy Policy" link
+
+Added a clickable privacy-policy link in the dashboard's **About & Privacy → Your Privacy** block,
+below the existing privacy text. **Only `dashboard.ts` edited.**
+
+- Appended as a third child of the `privacy` div (same IIFE pattern as the surrounding elements):
+  - Text `Read our full Privacy Policy →`, href `https://kanthiralabs.github.io/prakni-privacy/`.
+  - `target="_blank"` + `rel="noopener noreferrer"` (safe-new-tab default).
+  - Style: `color #4F46E5`, `fontSize 13px`, `textDecoration none`, `fontWeight 600`,
+    `display: inline-block` + `marginTop 6px` (its own line).
+  - Hover: `mouseenter` → underline, `mouseleave` → none (no `:hover` CSS — MV3/CSP discipline,
+    consistent with the banner's hover approach).
+- `npm run package` rebuilt clean; ZIPs grew ~150 bytes (added markup):
+  `prakni-chrome-v1.0.0.zip` ~560.2 KB, `prakni-firefox-v1.0.0.zip` ~560.2 KB.
+
+---
+
+## 15. Launch checklist (open items)
+
+Code/docs are submission-ready; these are the remaining **operational** tasks (not code):
+
+- [ ] Register/own **`kanthira.com`** and stand up the **`support@kanthira.com`** mailbox.
+- [ ] Host `PRIVACY.md` at **`https://kanthiralabs.github.io/prakni-privacy/`** so the in-app link
+      and the store-form privacy URL both resolve.
+- [ ] Decide the fate of the two **`banner.ts`** references to `credmail-final-removebg.png`
+      (rename the asset or repoint to `prakni_logo_nobg.png`) — flagged in §12, **not yet changed**.
+- [ ] Manual smoke test: load `dist/chrome/` unpacked, run `chrome.storage.local.clear()`, reload
+      Gmail → confirm graceful recovery; open the dashboard → confirm the Privacy Policy link renders
+      and hovers correctly.
+- [ ] Confirm the **Firefox add-on ID** `prakni@prakni.app` (in `firefox.overrides.json`) is the
+      identity you want locked on AMO.
+- [ ] Optional: `.gitignore` the root `prakni-*.zip` artifacts and `dist/`.

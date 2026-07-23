@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Shared link extraction. Given a message container, pull the anchors the
 // engine needs to compare link text against destination (docs/detection.md rules).
 

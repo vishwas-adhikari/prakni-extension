@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Typed async wrapper around chrome.storage.local.
 //
 // Hard rule (MV3): chrome.storage.local is asynchronous. Every export here returns a

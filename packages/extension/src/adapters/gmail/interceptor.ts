@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1.5] Link Shield — click interception by href rewrite.
 //
 // Instead of listening for clicks (which misses middle-click, right-click "open in

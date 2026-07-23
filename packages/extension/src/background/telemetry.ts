@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Metadata-only telemetry.
 //
 // Privacy hard rule: telemetry is metadata only — never bodyText/subject/sender or any

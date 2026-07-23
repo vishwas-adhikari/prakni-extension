@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1.5] Link Shield warning page (extension context).
 //
 // Reached when the user opens a link that Prakni flagged: the Gmail adapter
@@ -241,7 +242,7 @@ function render(): void {
   });
 
   const footerText = document.createElement('span');
-  footerText.textContent = 'Protected by Prakni · All analysis is local';
+  footerText.textContent = 'Protected by Prakni · © 2026 KanthiraLabs · All analysis is local';
 
   footer.append(footerLogo, footerText);
 

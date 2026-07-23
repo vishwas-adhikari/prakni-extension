@@ -33,6 +33,10 @@ Prakni — Phishing Protection for Gmail
 > Prakni never reads, stores, or transmits your email content to any server. All detection runs
 > locally in your browser using rule-based analysis. See our privacy policy for details.
 
+## Privacy policy URL
+
+https://kanthiralabs.github.io/prakni-privacy/
+
 ## Category
 
 Productivity

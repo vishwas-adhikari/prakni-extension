@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { BRANDS } from "../data";
 
 /** Brand keywords mentioned in the text, matched on word boundaries. */

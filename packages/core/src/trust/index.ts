@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { EmailData, TrustResult } from "../types";
 import { passesAuth } from "./auth";
 import { onTrustedList } from "./reputation";

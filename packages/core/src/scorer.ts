@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import { RuleResult, ScoringConfig, Verdict } from "./types";
 
 /**

@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Reading-pane warning banner (docs/design.md "Reading-pane banner").
 //
 // Shown for Suspicious / High Risk only — Safe stays silent. Every node is built

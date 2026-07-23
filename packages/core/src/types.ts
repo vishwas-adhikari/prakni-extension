@@ -1,3 +1,4 @@
+// Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // Core TypeScript types — see docs/schema.md.
 // The core engine only ever sees these; it never touches the DOM.
 
