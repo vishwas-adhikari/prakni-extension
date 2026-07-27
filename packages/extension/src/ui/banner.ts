@@ -38,6 +38,16 @@ const LINK_MAX = 60;
 // before the fade finishes.
 const transitioningBanners = new Set<HTMLElement>();
 
+/**
+ * Read-only: is a Mark-Safe green transition currently running in this container?
+ * Adapters that remove their banner via their own wrapper (Outlook) must check this
+ * before removing, so a re-render can't destroy the green banner mid-fade. Gmail's
+ * path already respects the same guard inside injectBanner.
+ */
+export function isBannerTransitioning(container: HTMLElement): boolean {
+  return transitioningBanners.has(container);
+}
+
 /** Drop the query string (privacy: CLAUDE.md) and truncate for display. */
 function displayUrl(url: string): string {
   const stripped = url.split('?')[0];

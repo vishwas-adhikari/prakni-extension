@@ -16,7 +16,7 @@ import {
 } from '../../storage/local-state';
 import { startOutlookObserver } from './observer';
 import { extract } from './parser';
-import { injectBanner } from '../../ui/banner';
+import { injectBanner, isBannerTransitioning } from '../../ui/banner';
 import { injectPill } from '../../ui/pill';
 import { hijackBadLinks, restoreLinks } from './interceptor';
 import freeProviders from '../../../../../data/free-email-providers.json';
@@ -95,9 +95,14 @@ function renderOutlookBanner(
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
 ): void {
-  // Remove any existing Outlook banner (idempotent).
+  // Remove any existing Outlook banner (idempotent) — BUT never during a Mark-Safe
+  // green transition, or the fade gets destroyed before it finishes (Gmail's shared
+  // container path is already guarded inside injectBanner; our separate wrapper isn't).
   const existing = document.getElementById(BANNER_ID);
-  if (existing) existing.remove();
+  if (existing) {
+    if (isBannerTransitioning(existing)) return;
+    existing.remove();
+  }
 
   if (verdict.silent) return;
 
