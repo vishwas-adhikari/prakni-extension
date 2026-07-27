@@ -9,5 +9,32 @@
     "senderEmail": ["email", "data-hovercard-id"],
     "subject": [".bog", ".bqe", ".y6 span"],
     "threadIdAttrs": ["id", "data-legacy-thread-id"]
+  },
+  "outlook": {
+    "container": [
+      "[data-test-id='mailMessageBodyContainer']",
+      ".ReadingPaneContainer",
+      "[aria-label='Email message']"
+    ],
+    "body": [
+      "[data-test-id='mailMessageBodyContainer']",
+      ".BodyFragment",
+      "div[aria-label='Message body']",
+      "div[role='document']"
+    ],
+    "subjectNote": "Subject CSS selectors below are tried inside the reading-pane scope first; parser.ts falls back to document.title (split on ' - ') because Outlook's subject can be a plain React span with no selector.",
+    "subject": [
+      "[id$='_SUBJECT']",
+      "[role='heading'][aria-level='3']",
+      "[role='heading'][aria-level='2']"
+    ],
+    "inboxList": [
+      "[aria-label='Message list']",
+      ".customScrollBar"
+    ],
+    "inboxRow": [
+      "div[role='option']",
+      "div[role='row']"
+    ]
   }
 }
