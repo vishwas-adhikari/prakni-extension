@@ -44,17 +44,27 @@ async function incrementStat(key: 'scanned' | 'detected' | 'markedSafe'): Promis
   await chrome.storage.local.set({ session_stats });
 }
 
+// The reading-pane subject heading — scoped to #ConversationReadingPaneContainer and
+// selected by CONTENT shape (not email / "To:" / date / "[Draft]"), so it survives
+// Outlook's hashed class names. This is where the risk pill anchors (right of the
+// subject title, in the header bar). Unscoped document.querySelector previously grabbed
+// a left-rail heading, putting the pill on the far left.
 function findSubjectElement(): HTMLElement | null {
-  const selectors = [
-    '[role="heading"][aria-level="2"]',
-    '[id$="_SUBJECT"]',
-    '[role="heading"][aria-level="3"]',
-  ];
-  for (const sel of selectors) {
-    try {
-      const el = document.querySelector(sel);
-      if (el) return el as HTMLElement;
-    } catch { /* skip */ }
+  const scope =
+    document.querySelector('#ConversationReadingPaneContainer') ||
+    document.querySelector('[aria-label="Email message"]');
+  if (!scope) return null;
+  const EMAIL = /[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+/;
+  const isSubjectText = (t: string): boolean =>
+    !!t &&
+    !EMAIL.test(t) &&
+    !/^to:/i.test(t) &&
+    t !== '[Draft]' &&
+    !/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(t) &&
+    !/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b.*\d/.test(t);
+  for (const h of Array.from(scope.querySelectorAll('[role="heading"][aria-level="3"]'))) {
+    const t = ((h as HTMLElement).innerText || '').replace(/\s+/g, ' ').trim();
+    if (isSubjectText(t)) return h as HTMLElement;
   }
   return null;
 }
@@ -128,7 +138,22 @@ async function render(
   renderOutlookBanner(verdict, senderEmail, onMarkSafe, onReport);
 
   const subjectEl = findSubjectElement();
-  if (subjectEl) injectPill(verdict, subjectEl);
+  if (subjectEl) {
+    injectPill(verdict, subjectEl);
+    // Outlook-only: the shared pill can wrap ("High Risk" → 2 lines) when the subject
+    // flex row squeezes it. Keep it on one line with breathing room, scoped to the
+    // reading-pane pill so Gmail's pill (which renders fine) is never touched.
+    const scope = document.querySelector('#ConversationReadingPaneContainer');
+    const pill = scope?.querySelector('[data-credmail-pill]') as HTMLElement | null;
+    if (pill) {
+      Object.assign(pill.style, {
+        whiteSpace: 'nowrap',
+        flexShrink: '0',
+        padding: '2px 10px',
+        marginLeft: '12px',
+      });
+    }
+  }
 
   const el = container as HTMLElement;
   if (verdict.silent) {
@@ -210,7 +235,10 @@ function isListView(): boolean {
   return (
     !document.querySelector('[aria-label="Email message"]') &&
     !document.querySelector('[data-test-id="mailMessageBodyContainer"]') &&
-    !document.querySelector('.ReadingPaneContainer')
+    !document.querySelector('.ReadingPaneContainer') &&
+    !document.querySelector('#ConversationReadingPaneContainer') &&
+    !document.querySelector('.BodyFragment') &&
+    !document.querySelector("div[role='document']")
   );
 }
 

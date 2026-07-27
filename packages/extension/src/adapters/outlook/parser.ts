@@ -40,12 +40,6 @@ const FALLBACK_BODY = [
   "div[role='document']",
 ];
 
-const FALLBACK_SUBJECT = [
-  '[id$="_SUBJECT"]',
-  '[role="heading"][aria-level="3"]',
-  '[role="heading"][aria-level="2"]',
-];
-
 function visibleText(el: Element): string {
   return (el as HTMLElement).innerText ?? el.textContent ?? '';
 }
@@ -107,6 +101,59 @@ function extractSender(container: Element): { email: string; name: string } {
 }
 
 /**
+ * The reading-pane scope that holds BOTH the subject heading and the message pane.
+ * `#ConversationReadingPaneContainer` is a stable id (unlike the hashed Fluent UI
+ * classes); fall back to the aria wrapper, then whatever the caller passed.
+ */
+function readingPaneScope(fallback: Element): Element {
+  return (
+    document.querySelector('#ConversationReadingPaneContainer') ||
+    document.querySelector('[aria-label="Email message"]') ||
+    fallback
+  );
+}
+
+/**
+ * Is this heading text a subject (vs. the sender line, recipient, date, or draft tag)?
+ * Keyed on content shape so it survives Outlook's class-name churn.
+ */
+function isSubjectText(t: string): boolean {
+  if (!t) return false;
+  if (EMAIL_REGEX.test(t)) return false;
+  if (/^to:/i.test(t)) return false;
+  if (t === '[Draft]') return false;
+  if (/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/.test(t)) return false;
+  if (/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun)\b.*\d/.test(t)) return false;
+  return true;
+}
+
+/** Subject from the first subject-shaped aria-level-3 heading in the scope. */
+function extractSubjectFromHeadings(scope: Element): string {
+  for (const h of Array.from(scope.querySelectorAll('[role="heading"][aria-level="3"]'))) {
+    const t = cleanText(visibleText(h));
+    if (isSubjectText(t)) return t;
+  }
+  return '';
+}
+
+/** Sender from the email-bearing aria-level-3 heading inside the Email message pane. */
+function extractSenderFromHeadings(scope: Element): { email: string; name: string } | null {
+  const pane = scope.querySelector('[aria-label="Email message"]') ?? scope;
+  for (const h of Array.from(pane.querySelectorAll('[role="heading"][aria-level="3"]'))) {
+    const raw = h.textContent || '';
+    const match = raw.match(EMAIL_REGEX);
+    if (match) {
+      const email = match[1].replace(/[<>]/g, '').trim().toLowerCase();
+      if (email.includes('@')) {
+        const name = cleanText(raw.replace(EMAIL_REGEX, '').replace(/[<>]/g, ''));
+        return { email, name: name || 'Unknown' };
+      }
+    }
+  }
+  return null;
+}
+
+/**
  * Outlook exposes the open message's subject in the tab title, e.g.
  * "Paypal update required - user@contoso.com" or "Subject - Outlook". Take the part
  * before the first " - " as the subject. Primary subject fallback when the CSS
@@ -148,14 +195,16 @@ export async function extract(
   // --- Scope: the reading-pane wrapper. Prefer the PARENT of the body container
   // (it wraps both the header, with the sender, and the body); fall back to the
   // reading pane, the aria wrapper, then whatever the observer passed. ---
-  const scope: Element =
+  const scope: Element = readingPaneScope(
     document.querySelector('[data-test-id="mailMessageBodyContainer"]')?.parentElement ||
-    document.querySelector('.ReadingPaneContainer') ||
-    document.querySelector('[aria-label="Email message"]') ||
-    container;
+      document.querySelector('.ReadingPaneContainer') ||
+      document.querySelector('[aria-label="Email message"]') ||
+      container,
+  );
 
-  // --- Sender: first email-shaped span inside the scope (header precedes body). ---
-  const sender = extractSender(scope);
+  // --- Sender: prefer the email-bearing reading-pane heading (real header sender,
+  // immune to forwarded/quoted body addresses); fall back to the span scan. ---
+  const sender = extractSenderFromHeadings(scope) ?? extractSender(scope);
   const senderEmail = sender.email;
   const senderName = sender.name;
 
@@ -176,9 +225,10 @@ export async function extract(
   // --- Subject: CSS selectors inside the scope (OTA + fallbacks), then the tab
   // title, then the body's first line. A missing subject must NOT block extraction —
   // the body and links carry the detection signal. ---
-  const subjectSelectors = [...(otaSelectors.subject ?? []), ...FALLBACK_SUBJECT];
+  const subjectSelectors = [...(otaSelectors.subject ?? [])];
   const subjectEl = firstMatch(subjectSelectors, scope);
   let subject = subjectEl ? cleanText(visibleText(subjectEl)) : '';
+  if (!subject) subject = extractSubjectFromHeadings(scope);
   if (!subject) subject = extractSubjectFromTitle();
   if (!subject && bodyText) {
     subject = bodyText.trim().split('\n')[0].slice(0, 100);
