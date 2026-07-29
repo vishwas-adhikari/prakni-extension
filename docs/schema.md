@@ -69,6 +69,7 @@ export interface LocalState {          // chrome.storage.local
 > **Extension-only storage keys** (kept in `chrome.storage.local` but *not* part of
 > the `LocalState` interface, since the pure `core/` engine never reads them):
 > - `scan_inbox_rows: boolean` — user toggle for the inbox row scanner (default `true`).
+> - `recent_threats: ThreatRecord[]` — last 20 flagged emails (Suspicious/High Risk), local-only, capped/FIFO/de-duped. Stores readable IOCs (sender, riskLevel, reasons, query-stripped maliciousUrl) plus a 30-char normalized subject prefix (for cross-provider inbox reflection via substring containment). No full subject/body stored. Powers inbox row reflection and the dashboard threat feed.
 
 ## Cloud schema (Supabase / PostgreSQL)
 

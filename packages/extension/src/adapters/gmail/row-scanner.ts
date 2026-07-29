@@ -12,6 +12,7 @@
 
 import brands from '../../../../../data/brands.json';
 import freeProviders from '../../../../../data/free-email-providers.json';
+import { getThreatMatchers, reflectRow } from '../../storage/threats';
 
 // Fallback defaults — primary source is OTA via chrome.storage.local dom_selectors.row
 const DEFAULT_ROW_SELECTORS = {
@@ -46,7 +47,7 @@ const ROW_PILL_BASE: Record<string, string> = {
   verticalAlign: 'middle',
 };
 
-type PillKind = 'reported' | 'suspicious';
+type PillKind = 'reported' | 'suspicious' | 'highrisk';
 const ROW_PILL_VARIANTS: Record<PillKind, { text: string; style: Record<string, string> }> = {
   // Blocklist hit — the user's explicit flag; takes priority over a heuristic spoof.
   reported: {
@@ -57,6 +58,11 @@ const ROW_PILL_VARIANTS: Record<PillKind, { text: string; style: Record<string, 
   suspicious: {
     text: '⚠ Suspicious',
     style: { background: '#FFF7ED', color: '#7C2D12', border: '1px solid #ED6C02' },
+  },
+  // Real High-Risk verdict reflected from an opened email.
+  highrisk: {
+    text: '🚨 High Risk',
+    style: { background: '#FEF2F2', color: '#7F1D1D', border: '1px solid #C62828' },
   },
 };
 
@@ -134,6 +140,7 @@ export async function scanInboxRows(): Promise<void> {
     const blocklist = new Set(
       ((stored.local_blocklist as string[]) ?? []).map((s) => s.toLowerCase()),
     );
+    const matchers = await getThreatMatchers();
 
     for (const row of Array.from(document.querySelectorAll(sel.container))) {
       const threadId = firstAttr(row, sel.threadIdAttrs);
@@ -156,6 +163,15 @@ export async function scanInboxRows(): Promise<void> {
       const senderName = (sender.el.textContent ?? '').trim();
       const subjectEl = firstEl(row, sel.subject);
       const subject = subjectEl ? (subjectEl.textContent ?? '').trim() : '';
+
+      // Real verdict (from opening the email) supersedes the row heuristic.
+      const reflected = reflectRow(matchers, senderEmail, row.textContent || '');
+      if (reflected && subjectEl) {
+        injectRowPill(row, subjectEl, reflected === 'High Risk' ? 'highrisk' : 'suspicious');
+        row.setAttribute(ROW_MARK, threadId);
+        continue; // real verdict shown — skip heuristic for this row
+      }
+
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
 
       const isReported = blocklist.has(senderEmail.toLowerCase());

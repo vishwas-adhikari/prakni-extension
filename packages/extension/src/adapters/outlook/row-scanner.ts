@@ -7,6 +7,7 @@
 
 import brands from '../../../../../data/brands.json';
 import freeProviders from '../../../../../data/free-email-providers.json';
+import { getThreatMatchers, reflectRow } from '../../storage/threats';
 
 const EMAIL_REGEX = /([a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+\.[a-zA-Z0-9_-]+)/;
 
@@ -39,7 +40,7 @@ const ROW_PILL_BASE: Record<string, string> = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
 };
 
-type PillKind = 'reported' | 'suspicious';
+type PillKind = 'reported' | 'suspicious' | 'highrisk';
 const ROW_PILL_VARIANTS: Record<PillKind, { text: string; style: Record<string, string> }> = {
   reported: {
     text: '🚩 Reported',
@@ -48,6 +49,10 @@ const ROW_PILL_VARIANTS: Record<PillKind, { text: string; style: Record<string, 
   suspicious: {
     text: '⚠ Suspicious',
     style: { background: '#FFF7ED', color: '#7C2D12', border: '1px solid #ED6C02' },
+  },
+  highrisk: {
+    text: '🚨 High Risk',
+    style: { background: '#FEF2F2', color: '#7F1D1D', border: '1px solid #C62828' },
   },
 };
 
@@ -117,6 +122,7 @@ export async function scanOutlookRows(): Promise<void> {
     const blocklist = new Set(
       ((stored.local_blocklist as string[]) ?? []).map((s) => s.toLowerCase()),
     );
+    const matchers = await getThreatMatchers();
 
     // Find the inbox list container.
     let listContainer: Element | null = null;
@@ -156,6 +162,14 @@ export async function scanOutlookRows(): Promise<void> {
         senderEmail = emailMatch ? emailMatch[1].toLowerCase() : '';
       }
       if (!senderEmail) continue; // can't identify sender — skip, don't mark
+
+      // Real verdict (from opening the email) supersedes the row heuristic.
+      const reflected = reflectRow(matchers, senderEmail, row.textContent || '');
+      if (reflected) {
+        injectRowPill(row, reflected === 'High Risk' ? 'highrisk' : 'suspicious');
+        row.setAttribute(ROW_MARK, senderEmail);
+        continue; // real verdict shown — skip heuristic for this row
+      }
 
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
       const isReported = blocklist.has(senderEmail);

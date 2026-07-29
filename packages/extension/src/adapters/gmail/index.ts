@@ -19,6 +19,7 @@ import { extract } from './parser';
 import { injectBanner } from '../../ui/banner';
 import { injectPill } from '../../ui/pill';
 import { hijackBadLinks, restoreLinks } from './interceptor';
+import { recordThreat } from '../../storage/threats';
 import freeProviders from '../../../../../data/free-email-providers.json';
 
 // Freemail domains can't be trusted wholesale — whitelisting gmail.com would clear the
@@ -146,6 +147,9 @@ startObserver(async (messageId, container) => {
   if (verdict.riskLevel === 'Suspicious' || verdict.riskLevel === 'High Risk') {
     await incrementStat('detected');
   }
+  // Record the flagged email locally (Option C) for inbox-row reflection — display
+  // state only; never touches the scanned/detected counters above.
+  await recordThreat(emailData.senderEmail, emailData.subject, verdict);
   await render(verdict, container, emailData.senderEmail, onMarkSafe, onReport);
 });
 
