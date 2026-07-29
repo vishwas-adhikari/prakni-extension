@@ -58,11 +58,26 @@ export function startObserver(onEmailOpen: OnEmailOpen): void {
 
     const selectors = await getDomSelectors();
     const bodySelectors = [...(selectors.body ?? []), FALLBACK_BODY_SELECTOR];
+    const subjectSelectors = selectors.subject ?? [];
+
+    const subjectPresent = (): boolean => {
+      for (const sel of subjectSelectors) {
+        try {
+          if (document.querySelector(sel)) return true;
+        } catch {
+          /* invalid OTA selector — ignore */
+        }
+      }
+      return false;
+    };
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
       const container = findBodyContainer(bodySelectors);
-      if (container) {
-        // The user may have navigated away during the poll — re-check the id.
+      // Wait for BOTH the body container AND the subject heading, so the parser
+      // reads the real subject via its selector instead of falling back to the
+      // heuristic (which would grab Gmail's global "Search Ask Gemini" box).
+      // If subject selectors are empty/unconfigured, don't block on them.
+      if (container && (subjectSelectors.length === 0 || subjectPresent())) {
         const current = messageIdFromHash();
         if (current !== messageId || processed.has(current)) return;
         processed.add(messageId);

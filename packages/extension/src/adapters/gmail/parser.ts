@@ -97,19 +97,39 @@ function heuristicSender(root: ParentNode): { email: string; name: string } {
   return { email: '', name: '' };
 }
 
-/** Largest visible heading = subject. */
+/** Text that is Gmail UI chrome, never a subject. */
+function isUiChrome(t: string): boolean {
+  const s = t.trim().toLowerCase();
+  return (
+    s === '' ||
+    s === 'search' ||
+    s === 'search mail' ||
+    s.startsWith('search ask') ||   // "Search Ask Gemini"
+    s === 'ask gemini' ||
+    s === 'labels' ||
+    s === 'main menu' ||
+    s.length > 250                  // a whole pane grabbed as a heading, not a subject
+  );
+}
+
+/**
+ * Heuristic subject: the largest visible heading that is NOT Gmail UI chrome.
+ * Prefers headings inside the open thread; returns '' if nothing plausible is
+ * found so the confidence gate aborts rather than scoring UI text as a subject.
+ */
 function heuristicSubject(): string {
-  let best = '';
-  let bestArea = 0;
-  for (const h of Array.from(document.querySelectorAll('h1, h2, h3'))) {
-    const rect = h.getBoundingClientRect();
-    const area = rect.width * rect.height;
-    if (area > bestArea) {
-      bestArea = area;
-      best = cleanText(visibleText(h));
-    }
-  }
-  return best;
+  // Restrict to the reading area if we can, to avoid the global search box.
+  const scope: ParentNode =
+    document.querySelector('[role="main"]') ?? document;
+  const headings = Array.from(scope.querySelectorAll('h1, h2, h3'))
+    .map((h) => ({ el: h, text: cleanText(visibleText(h)) }))
+    .filter((x) => x.text && !isUiChrome(x.text))
+    .sort((a, b) => {
+      const ra = a.el.getBoundingClientRect();
+      const rb = b.el.getBoundingClientRect();
+      return rb.width * rb.height - ra.width * ra.height;
+    });
+  return headings.length > 0 ? headings[0].text : '';
 }
 
 /**
