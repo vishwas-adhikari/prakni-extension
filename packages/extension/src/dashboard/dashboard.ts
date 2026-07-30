@@ -1,6 +1,7 @@
 // Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
-// [P1] Full-page dashboard (opens in its own tab). Protection status, trusted-domain
-// and blocked-sender management, detection sensitivity, and about/privacy.
+// [P1] Full-page dashboard (opens in its own tab). A shared zone (protection status,
+// trusted domains, safe contacts, reported senders, about/privacy) over the global keys,
+// plus a tabbed per-provider zone (stats + Recent Threats) over the {provider}:* keys.
 // A normal extension page: styles via Object.assign, nodes via createElement +
 // textContent, all storage access async. No CSS files, no innerHTML.
 
@@ -15,7 +16,11 @@ import {
   getBlocklist,
   addToBlocklist,
   removeFromBlocklist,
+  getStats,
+  getScanRows,
+  setScanRows,
 } from '../storage/local-state';
+import { getThreats, type ThreatRecord, type Provider } from '../storage/threats';
 import freeProviders from '../../../../data/free-email-providers.json';
 
 // Freemail providers must never be "trusted" — doing so would clear the gate for every
@@ -24,38 +29,13 @@ const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerC
 
 const VERSION = chrome.runtime.getManifest().version;
 
-interface ScoringConfig {
-  suspiciousThreshold: number;
-  highRiskThreshold: number;
-  weakCorroborationNeeded: number;
-}
-
-interface SessionStats {
-  scanned: number;
-  detected: number;
-  markedSafe: number;
-}
-
-const DEFAULT_SCORING: ScoringConfig = {
-  suspiciousThreshold: 30,
-  highRiskThreshold: 70,
-  weakCorroborationNeeded: 2,
+// Detection sensitivity is fixed at Balanced — the engine reads scoring_config, which
+// keeps its stored default. There is no UI to change it.
+const PROVIDER_LABEL: Record<Provider, string> = {
+  gmail: 'Gmail',
+  outlook: 'Outlook',
+  zoho: 'Zoho',
 };
-const EMPTY_STATS: SessionStats = { scanned: 0, detected: 0, markedSafe: 0 };
-
-type Sensitivity = 'Conservative' | 'Balanced' | 'Aggressive';
-const SENSITIVITY: Record<Sensitivity, { suspiciousThreshold: number; highRiskThreshold: number }> = {
-  Conservative: { suspiciousThreshold: 50, highRiskThreshold: 80 },
-  Balanced: { suspiciousThreshold: 30, highRiskThreshold: 70 },
-  Aggressive: { suspiciousThreshold: 20, highRiskThreshold: 50 },
-};
-
-function sensitivityFromConfig(c: ScoringConfig): Sensitivity {
-  for (const key of Object.keys(SENSITIVITY) as Sensitivity[]) {
-    if (SENSITIVITY[key].suspiciousThreshold === c.suspiciousThreshold) return key;
-  }
-  return 'Balanced';
-}
 
 // --- small builders ---------------------------------------------------------
 
@@ -218,19 +198,87 @@ function listSection(opts: {
   return card;
 }
 
+/** "just now" / "12m ago" / "3h ago" / "2d ago". */
+function relTime(ts: number): string {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
+  return `${Math.floor(s / 86400)}d ago`;
+}
+
+/** One entry in a provider's Recent Threats feed. */
+function threatCard(t: ThreatRecord): HTMLDivElement {
+  const highRisk = t.riskLevel === 'High Risk';
+  const accent = highRisk ? THEME.colors.danger : '#ED6C02';
+
+  const card = document.createElement('div');
+  Object.assign(card.style, {
+    padding: '14px',
+    marginBottom: '10px',
+    background: THEME.colors.bg,
+    borderRadius: THEME.radius.md,
+    borderLeft: `3px solid ${accent}`,
+  });
+
+  const top = document.createElement('div');
+  Object.assign(top.style, {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '6px',
+  });
+  const badge = document.createElement('span');
+  badge.textContent = highRisk ? '🚨 High Risk' : '⚠ Suspicious';
+  Object.assign(badge.style, { fontWeight: '700', fontSize: '13px', color: accent });
+  top.append(badge, muted(relTime(t.timestamp), '11px'));
+
+  const sender = document.createElement('div');
+  sender.textContent = t.sender;
+  Object.assign(sender.style, {
+    fontSize: '13px',
+    fontWeight: '600',
+    marginBottom: '2px',
+    wordBreak: 'break-all',
+  });
+
+  // subjectPrefix is capped at 30 chars by the store — show an ellipsis when it hit the cap.
+  const subj = document.createElement('div');
+  subj.textContent = `"${t.subjectPrefix}${t.subjectPrefix.length >= 30 ? '…' : ''}"`;
+  Object.assign(subj.style, {
+    fontSize: '13px',
+    color: THEME.colors.textSecondary,
+    marginBottom: '8px',
+  });
+
+  card.append(top, sender, subj);
+
+  for (const r of t.reasons) {
+    const li = document.createElement('div');
+    li.textContent = `• ${r}`;
+    Object.assign(li.style, { fontSize: '12px', color: THEME.colors.text, marginBottom: '3px' });
+    card.append(li);
+  }
+  if (t.maliciousUrl) {
+    const url = document.createElement('div');
+    url.textContent = `🔗 ${t.maliciousUrl}`;
+    Object.assign(url.style, {
+      fontSize: '12px',
+      color: THEME.colors.primary,
+      marginTop: '6px',
+      wordBreak: 'break-all',
+    });
+    card.append(url);
+  }
+  return card;
+}
+
 // --- main -------------------------------------------------------------------
 
 async function render(): Promise<void> {
-  const stored = await chrome.storage.local.get({
-    is_active: true,
-    scoring_config: DEFAULT_SCORING,
-    session_stats: EMPTY_STATS,
-    scan_inbox_rows: true,
-  });
+  const stored = await chrome.storage.local.get({ is_active: true });
   const isActive = stored.is_active as boolean;
-  const scoring = stored.scoring_config as ScoringConfig;
-  const stats = stored.session_stats as SessionStats;
-  const scanRows = stored.scan_inbox_rows as boolean;
+  const scanRows = await getScanRows();
 
   Object.assign(document.body.style, {
     margin: '0',
@@ -326,81 +374,7 @@ async function render(): Promise<void> {
   });
   protRow.append(shield, protText, cardToggle.el);
 
-  const statsRow = document.createElement('div');
-  Object.assign(statsRow.style, { display: 'flex', gap: '12px', marginTop: '18px' });
-  const statBox = (label: string, value: number, accent: string): HTMLDivElement => {
-    const b = document.createElement('div');
-    Object.assign(b.style, {
-      flex: '1 1 0',
-      textAlign: 'center',
-      padding: '12px 8px',
-      background: THEME.colors.bg,
-      borderRadius: THEME.radius.md,
-    });
-    const n = document.createElement('div');
-    n.textContent = String(value);
-    Object.assign(n.style, { fontSize: '22px', fontWeight: '700', color: accent });
-    const c = muted(label, '11px');
-    c.style.marginTop = '2px';
-    b.append(n, c);
-    return b;
-  };
-  statsRow.append(
-    statBox('Scanned', stats.scanned, THEME.colors.primary),
-    statBox('Detected', stats.detected, THEME.colors.danger),
-    statBox('Marked Safe', stats.markedSafe, THEME.colors.success),
-  );
-  protCard.append(protRow, statsRow);
-
-  // --- Detection settings card ---------------------------------------------
-  const detCard = createCard();
-  detCard.appendChild(sectionTitle('Detection Settings'));
-
-  let currentSensitivity = sensitivityFromConfig(scoring);
-  const optionEls = new Map<Sensitivity, HTMLDivElement>();
-  const sensWrap = document.createElement('div');
-  Object.assign(sensWrap.style, { display: 'flex', flexDirection: 'column', gap: '8px' });
-
-  const paintSensitivity = (): void => {
-    for (const [key, el] of optionEls) {
-      const on = key === currentSensitivity;
-      el.style.borderColor = on ? THEME.colors.primary : THEME.colors.border;
-      el.style.background = on ? THEME.colors.primaryLight : THEME.colors.card;
-    }
-  };
-
-  const SENS_DESC: Record<Sensitivity, string> = {
-    Conservative: 'Fewer warnings, might miss edge cases',
-    Balanced: 'Recommended',
-    Aggressive: 'More warnings, more false positives',
-  };
-  for (const key of Object.keys(SENSITIVITY) as Sensitivity[]) {
-    const opt = document.createElement('div');
-    Object.assign(opt.style, {
-      padding: '10px 12px',
-      border: `2px solid ${THEME.colors.border}`,
-      borderRadius: THEME.radius.md,
-      cursor: 'pointer',
-      transition: THEME.transitions.button,
-    });
-    const name = document.createElement('div');
-    name.textContent = key;
-    Object.assign(name.style, { fontWeight: '600', fontSize: '13px' });
-    opt.append(name, muted(SENS_DESC[key], '12px'));
-    opt.addEventListener('click', async () => {
-      currentSensitivity = key;
-      paintSensitivity();
-      await chrome.storage.local.set({
-        scoring_config: { ...SENSITIVITY[key], weakCorroborationNeeded: scoring.weakCorroborationNeeded },
-      });
-    });
-    optionEls.set(key, opt);
-    sensWrap.appendChild(opt);
-  }
-  paintSensitivity();
-  detCard.appendChild(sensWrap);
-
-  // Scan inbox rows toggle.
+  // Scan inbox rows toggle — global (applies to every provider's inbox).
   const scanRow = document.createElement('div');
   Object.assign(scanRow.style, {
     display: 'flex',
@@ -414,11 +388,10 @@ async function render(): Promise<void> {
   const scanLabel = document.createElement('div');
   scanLabel.textContent = 'Scan inbox rows';
   Object.assign(scanLabel.style, { fontWeight: '600', fontSize: '13px' });
-  const scanToggle = createToggleSwitch(scanRows, async (on) => {
-    await chrome.storage.local.set({ scan_inbox_rows: on });
-  });
+  const scanToggle = createToggleSwitch(scanRows, (on) => void setScanRows(on));
   scanRow.append(scanLabel, scanToggle.el);
-  detCard.appendChild(scanRow);
+
+  protCard.append(protRow, scanRow);
 
   // --- About & privacy card -------------------------------------------------
   const aboutCard = createCard();
@@ -545,11 +518,111 @@ async function render(): Promise<void> {
     remove: removeFromBlocklist,
   });
 
-  leftCol.append(protCard, detCard, aboutCard);
+  leftCol.append(protCard);
   rightCol.append(trustedCard, safeContactsCard, blockedCard);
   grid.append(leftCol, rightCol);
 
-  document.body.append(topBar, grid);
+  // --- Per-provider zone (tabbed) -------------------------------------------
+  // Display-only: reads the {provider}:* keys, writes nothing, triggers no scan.
+  const provWrap = document.createElement('div');
+  Object.assign(provWrap.style, {
+    maxWidth: '1100px',
+    margin: '0 auto 24px',
+    padding: '0 24px',
+    boxSizing: 'border-box',
+  });
+
+  const tabBar = document.createElement('div');
+  Object.assign(tabBar.style, { display: 'flex', gap: '4px', marginBottom: '16px' });
+
+  const panel = createCard();
+  let activeProvider: Provider = 'gmail';
+
+  const renderPanel = async (): Promise<void> => {
+    panel.textContent = '';
+    const stats = await getStats(activeProvider);
+    const threats = await getThreats(activeProvider);
+
+    const statsRow = document.createElement('div');
+    Object.assign(statsRow.style, { display: 'flex', gap: '12px', marginBottom: '20px' });
+    const statBox = (label: string, value: number, accent: string): HTMLDivElement => {
+      const b = document.createElement('div');
+      Object.assign(b.style, {
+        flex: '1 1 0',
+        textAlign: 'center',
+        padding: '14px 8px',
+        background: THEME.colors.bg,
+        borderRadius: THEME.radius.md,
+      });
+      const n = document.createElement('div');
+      n.textContent = String(value);
+      Object.assign(n.style, { fontSize: '24px', fontWeight: '700', color: accent });
+      const c = muted(label, '11px');
+      c.style.marginTop = '2px';
+      b.append(n, c);
+      return b;
+    };
+    statsRow.append(
+      statBox('Scanned', stats.scanned, THEME.colors.primary),
+      statBox('Detected', stats.detected, THEME.colors.danger),
+      statBox('Marked Safe', stats.markedSafe, THEME.colors.success),
+    );
+    panel.append(statsRow, sectionTitle('Recent Threats'));
+
+    if (threats.length === 0) {
+      panel.append(muted(`No threats detected in ${PROVIDER_LABEL[activeProvider]} yet.`));
+      return;
+    }
+    for (const t of threats) panel.append(threatCard(t));
+  };
+
+  const tabs: { el: HTMLDivElement; provider: Provider }[] = [];
+  const repaintTabs = (): void => {
+    for (const t of tabs) {
+      const on = t.provider === activeProvider;
+      t.el.style.background = on ? THEME.colors.card : 'transparent';
+      t.el.style.color = on ? THEME.colors.primary : THEME.colors.textSecondary;
+      t.el.style.borderBottom = on
+        ? `2px solid ${THEME.colors.primary}`
+        : '2px solid transparent';
+    }
+  };
+  const makeTab = (provider: Provider): HTMLDivElement => {
+    const tab = document.createElement('div');
+    tab.textContent = PROVIDER_LABEL[provider];
+    Object.assign(tab.style, {
+      padding: '10px 20px',
+      cursor: 'pointer',
+      fontWeight: '600',
+      fontSize: '14px',
+      borderRadius: `${THEME.radius.md} ${THEME.radius.md} 0 0`,
+      transition: THEME.transitions.button,
+    });
+    tab.addEventListener('click', () => {
+      activeProvider = provider;
+      repaintTabs();
+      void renderPanel();
+    });
+    tabs.push({ el: tab, provider });
+    return tab;
+  };
+  tabBar.append(makeTab('gmail'), makeTab('outlook'));
+  provWrap.append(tabBar, panel);
+  repaintTabs();
+  void renderPanel();
+
+  // About sits full-width at the very bottom, aligned with the per-provider zone.
+  // Wrapper (not the card itself) carries the alignment so the card keeps its padding.
+  const aboutWrap = document.createElement('div');
+  Object.assign(aboutWrap.style, {
+    maxWidth: '1100px',
+    margin: '0 auto 24px',
+    padding: '0 24px',
+    boxSizing: 'border-box',
+  });
+  aboutWrap.append(aboutCard);
+
+  document.body.append(topBar, grid, provWrap, aboutWrap);
 
   // Initial paint of all toggle-driven UI.
   syncActive(isActive);

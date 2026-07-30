@@ -1,19 +1,26 @@
 // Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 // [P1] Popup — quick access from the extension icon (~350x450).
-// Protection toggle + this-session stats + a button to the full dashboard.
-// All styling via Object.assign, all nodes via createElement + textContent.
+// Global protection toggle + per-provider stats (Gmail / Outlook pills) + a button to
+// the full dashboard. All styling via Object.assign, all nodes via createElement +
+// textContent.
 
 import { THEME, createToggleSwitch } from '../dashboard/theme';
+import { getStats } from '../storage/local-state';
+import type { Provider } from '../storage/threats';
 
 const VERSION = chrome.runtime.getManifest().version;
 
-interface SessionStats {
-  scanned: number;
-  detected: number;
-  markedSafe: number;
+/**
+ * Which mail provider the user is looking at right now, from the active tab's URL.
+ * Returns null when the active tab isn't a mail site (caller defaults to Gmail).
+ */
+async function detectProvider(): Promise<Provider | null> {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const url = tab?.url ?? '';
+  if (url.includes('mail.google.com')) return 'gmail';
+  if (url.includes('outlook.')) return 'outlook';
+  return null;
 }
-
-const EMPTY_STATS: SessionStats = { scanned: 0, detected: 0, markedSafe: 0 };
 
 function statCard(label: string, value: number, accent: string): HTMLDivElement {
   const card = document.createElement('div');
@@ -43,9 +50,9 @@ function statCard(label: string, value: number, accent: string): HTMLDivElement 
 }
 
 async function render(): Promise<void> {
-  const stored = await chrome.storage.local.get({ is_active: true, session_stats: EMPTY_STATS });
+  const stored = await chrome.storage.local.get({ is_active: true });
   const is_active = stored.is_active as boolean;
-  const session_stats = stored.session_stats as SessionStats;
+  let activeProvider: Provider = (await detectProvider()) ?? 'gmail';
 
   Object.assign(document.body.style, {
     margin: '0',
@@ -117,13 +124,56 @@ async function render(): Promise<void> {
   paintStatus(is_active);
   status.append(shield, statusText, toggle.el);
 
-  // Stats cards.
+  // Provider pills — slim row; the active one is filled, the other outlined. Clicking
+  // one re-renders only the stat cards below (no scan, no writes).
+  const pillRow = document.createElement('div');
+  Object.assign(pillRow.style, { display: 'flex', gap: '6px' });
+
+  // Stats cards for the selected provider.
   const stats = document.createElement('div');
   Object.assign(stats.style, { display: 'flex', gap: '10px' });
-  stats.append(
-    statCard('Emails scanned', session_stats.scanned, THEME.colors.primary),
-    statCard('Threats detected', session_stats.detected, THEME.colors.danger),
-  );
+  const paintStats = async (): Promise<void> => {
+    const s = await getStats(activeProvider);
+    stats.textContent = '';
+    stats.append(
+      statCard('Emails scanned', s.scanned, THEME.colors.primary),
+      statCard('Threats detected', s.detected, THEME.colors.danger),
+    );
+  };
+
+  const pills: { el: HTMLDivElement; provider: Provider }[] = [];
+  const paintPills = (): void => {
+    for (const p of pills) {
+      const on = p.provider === activeProvider;
+      Object.assign(p.el.style, {
+        background: on ? THEME.colors.primary : 'transparent',
+        color: on ? '#FFFFFF' : THEME.colors.textSecondary,
+        border: `1px solid ${on ? THEME.colors.primary : THEME.colors.border}`,
+      });
+    }
+  };
+  const makePill = (provider: Provider, label: string): HTMLDivElement => {
+    const el = document.createElement('div');
+    el.textContent = label;
+    Object.assign(el.style, {
+      padding: '4px 12px',
+      fontSize: '12px',
+      fontWeight: '600',
+      borderRadius: '12px',
+      cursor: 'pointer',
+      transition: THEME.transitions.button,
+    });
+    el.addEventListener('click', () => {
+      activeProvider = provider;
+      paintPills();
+      void paintStats();
+    });
+    pills.push({ el, provider });
+    return el;
+  };
+  pillRow.append(makePill('gmail', 'Gmail'), makePill('outlook', 'Outlook'));
+  paintPills();
+  await paintStats();
 
   // Open dashboard.
   const dashBtn = document.createElement('button');
@@ -147,7 +197,7 @@ async function render(): Promise<void> {
     chrome.tabs.create({ url: chrome.runtime.getURL('dashboard.html') });
   });
 
-  body.append(status, stats, dashBtn);
+  body.append(status, pillRow, stats, dashBtn);
 
   // --- Footer ---------------------------------------------------------------
   const footer = document.createElement('div');

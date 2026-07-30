@@ -136,7 +136,6 @@ export interface SessionStats {
 const EMPTY_STATS: SessionStats = { scanned: 0, detected: 0, markedSafe: 0 };
 
 const statsKey = (p: Provider): string => `${p}:session_stats`;
-const scanRowsKey = (p: Provider): string => `${p}:scan_inbox_rows`;
 
 /** Per-provider session stats. */
 export async function getStats(provider: Provider): Promise<SessionStats> {
@@ -157,13 +156,12 @@ export async function incrementStat(
   await chrome.storage.local.set({ [KEY]: stats });
 }
 
-/** Per-provider inbox-row-scan toggle (default on). */
-export async function getScanRows(provider: Provider): Promise<boolean> {
-  const KEY = scanRowsKey(provider);
-  const stored = await chrome.storage.local.get({ [KEY]: true });
-  return stored[KEY] as boolean;
+/** Inbox-row-scan toggle (global, default on). */
+export async function getScanRows(): Promise<boolean> {
+  const stored = await chrome.storage.local.get({ scan_inbox_rows: true });
+  return stored.scan_inbox_rows as boolean;
 }
 
-export async function setScanRows(provider: Provider, on: boolean): Promise<void> {
-  await chrome.storage.local.set({ [scanRowsKey(provider)]: on });
+export async function setScanRows(on: boolean): Promise<void> {
+  await chrome.storage.local.set({ scan_inbox_rows: on });
 }

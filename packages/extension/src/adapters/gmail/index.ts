@@ -170,7 +170,7 @@ function isInboxView(): boolean {
 async function scanWithRetry(): Promise<void> {
   // Inbox-row scanning is independently toggleable (default on) — when off, the
   // main email-open protection still runs; only row pills stop.
-  const scan_inbox_rows = await getScanRows('gmail');
+  const scan_inbox_rows = await getScanRows();
   if (!scan_inbox_rows) return;
   await scanInboxRows();
   setTimeout(async () => {

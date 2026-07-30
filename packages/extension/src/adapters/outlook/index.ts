@@ -241,7 +241,7 @@ function isListView(): boolean {
 }
 
 async function scanWithRetry(): Promise<void> {
-  const scan_inbox_rows = await getScanRows('outlook');
+  const scan_inbox_rows = await getScanRows();
   if (!scan_inbox_rows) return;
   await scanOutlookRows();
   setTimeout(async () => {
