@@ -13,6 +13,8 @@ import {
   addToWhitelist,
   addToSafeContacts,
   addToBlocklist,
+  incrementStat,
+  getScanRows,
 } from '../../storage/local-state';
 import { startOutlookObserver } from './observer';
 import { extract } from './parser';
@@ -31,19 +33,6 @@ const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerC
 const verdictCache = new Map<string, { verdict: Verdict; senderEmail: string }>();
 
 const BANNER_ID = 'prakni-outlook-banner';
-
-async function incrementStat(key: 'scanned' | 'detected' | 'markedSafe'): Promise<void> {
-  const stored = await chrome.storage.local.get({
-    session_stats: { scanned: 0, detected: 0, markedSafe: 0 },
-  });
-  const session_stats = stored.session_stats as {
-    scanned: number;
-    detected: number;
-    markedSafe: number;
-  };
-  session_stats[key] += 1;
-  await chrome.storage.local.set({ session_stats });
-}
 
 // The reading-pane subject heading — scoped to #ConversationReadingPaneContainer and
 // selected by CONTENT shape (not email / "To:" / date / "[Draft]"), so it survives
@@ -181,7 +170,7 @@ startOutlookObserver(
         if (FREE_PROVIDERS.has(domain)) await addToSafeContacts(senderEmail);
         else await addToWhitelist(domain);
       }
-      await incrementStat('markedSafe');
+      await incrementStat('outlook', 'markedSafe');
       const outlookSelectors = await getOutlookSelectors();
       const fresh = await extract(container, messageId, outlookSelectors);
       if (!fresh) {
@@ -197,7 +186,7 @@ startOutlookObserver(
 
     const onReport = async (senderEmail: string): Promise<void> => {
       await addToBlocklist(senderEmail);
-      await incrementStat('detected');
+      await incrementStat('outlook', 'detected');
       console.log('[Prakni] Outlook Reported:', senderEmail);
     };
 
@@ -223,13 +212,13 @@ startOutlookObserver(
     console.log(
       `[Prakni] Outlook Verdict for ${messageId}: ${verdict.riskLevel} (${verdict.score})`,
     );
-    await incrementStat('scanned');
+    await incrementStat('outlook', 'scanned');
     if (verdict.riskLevel === 'Suspicious' || verdict.riskLevel === 'High Risk') {
-      await incrementStat('detected');
+      await incrementStat('outlook', 'detected');
     }
     // Record the flagged email locally (Option C) for inbox-row reflection — display
     // state only; never touches the scanned/detected counters above.
-    await recordThreat(emailData.senderEmail, emailData.subject, verdict);
+    await recordThreat('outlook', emailData.senderEmail, emailData.subject, verdict);
     await render(verdict, container, emailData.senderEmail, onMarkSafe, onReport);
   },
   getOtaContainerSelectors,
@@ -252,7 +241,7 @@ function isListView(): boolean {
 }
 
 async function scanWithRetry(): Promise<void> {
-  const { scan_inbox_rows = true } = await chrome.storage.local.get({ scan_inbox_rows: true });
+  const scan_inbox_rows = await getScanRows('outlook');
   if (!scan_inbox_rows) return;
   await scanOutlookRows();
   setTimeout(async () => {

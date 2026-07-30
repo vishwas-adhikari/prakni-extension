@@ -140,7 +140,7 @@ export async function scanInboxRows(): Promise<void> {
     const blocklist = new Set(
       ((stored.local_blocklist as string[]) ?? []).map((s) => s.toLowerCase()),
     );
-    const matchers = await getThreatMatchers();
+    const matchers = await getThreatMatchers('gmail');
 
     for (const row of Array.from(document.querySelectorAll(sel.container))) {
       const threadId = firstAttr(row, sel.threadIdAttrs);

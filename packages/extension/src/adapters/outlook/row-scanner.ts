@@ -122,7 +122,7 @@ export async function scanOutlookRows(): Promise<void> {
     const blocklist = new Set(
       ((stored.local_blocklist as string[]) ?? []).map((s) => s.toLowerCase()),
     );
-    const matchers = await getThreatMatchers();
+    const matchers = await getThreatMatchers('outlook');
 
     // Find the inbox list container.
     let listContainer: Element | null = null;

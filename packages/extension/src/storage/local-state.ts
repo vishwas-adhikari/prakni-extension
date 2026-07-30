@@ -6,6 +6,7 @@
 // worker may sleep at any time, so state lives here, never in worker globals.
 
 import type { LocalState, ScoringConfig } from '@credmail/core';
+import type { Provider } from './threats';
 
 // Bootstrap fallback for the scorer thresholds before any OTA config is delivered.
 // Mirrors core's DEFAULT_CONFIG; OTA + the core scorer remain the real source of truth.
@@ -125,4 +126,44 @@ export async function setDomSelectors(
   selectors: Record<string, unknown>,
 ): Promise<void> {
   await setState({ dom_selectors: selectors });
+}
+
+export interface SessionStats {
+  scanned: number;
+  detected: number;
+  markedSafe: number;
+}
+const EMPTY_STATS: SessionStats = { scanned: 0, detected: 0, markedSafe: 0 };
+
+const statsKey = (p: Provider): string => `${p}:session_stats`;
+const scanRowsKey = (p: Provider): string => `${p}:scan_inbox_rows`;
+
+/** Per-provider session stats. */
+export async function getStats(provider: Provider): Promise<SessionStats> {
+  const KEY = statsKey(provider);
+  const stored = await chrome.storage.local.get({ [KEY]: EMPTY_STATS });
+  return { ...EMPTY_STATS, ...(stored[KEY] as Partial<SessionStats>) };
+}
+
+/** Increment one per-provider counter. Provider-scoped — never touches another provider. */
+export async function incrementStat(
+  provider: Provider,
+  key: keyof SessionStats,
+): Promise<void> {
+  const KEY = statsKey(provider);
+  const stored = await chrome.storage.local.get({ [KEY]: EMPTY_STATS });
+  const stats = { ...EMPTY_STATS, ...(stored[KEY] as Partial<SessionStats>) };
+  stats[key] += 1;
+  await chrome.storage.local.set({ [KEY]: stats });
+}
+
+/** Per-provider inbox-row-scan toggle (default on). */
+export async function getScanRows(provider: Provider): Promise<boolean> {
+  const KEY = scanRowsKey(provider);
+  const stored = await chrome.storage.local.get({ [KEY]: true });
+  return stored[KEY] as boolean;
+}
+
+export async function setScanRows(provider: Provider, on: boolean): Promise<void> {
+  await chrome.storage.local.set({ [scanRowsKey(provider)]: on });
 }

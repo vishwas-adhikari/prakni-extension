@@ -13,6 +13,8 @@ import {
   addToWhitelist,
   addToSafeContacts,
   addToBlocklist,
+  incrementStat,
+  getScanRows,
 } from '../../storage/local-state';
 import { startObserver } from './observer';
 import { extract } from './parser';
@@ -32,16 +34,6 @@ const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerC
 // sender alongside the verdict so the cache-hit path can re-render the banner
 // WITHOUT re-extracting; everything else (emailData, container) is re-derived live.
 const verdictCache = new Map<string, { verdict: Verdict; senderEmail: string }>();
-
-/** Bump a this-session counter in chrome.storage.local (read-modify-write). */
-async function incrementStat(key: 'scanned' | 'detected' | 'markedSafe'): Promise<void> {
-  const stored = await chrome.storage.local.get({
-    session_stats: { scanned: 0, detected: 0, markedSafe: 0 },
-  });
-  const session_stats = stored.session_stats as { scanned: number; detected: number; markedSafe: number };
-  session_stats[key] += 1;
-  await chrome.storage.local.set({ session_stats });
-}
 
 /** The reading-pane subject element (OTA subject selectors), for the pill. */
 async function findSubjectElement(): Promise<HTMLElement | null> {
@@ -98,7 +90,7 @@ startObserver(async (messageId, container) => {
       if (FREE_PROVIDERS.has(domain)) await addToSafeContacts(senderEmail);
       else await addToWhitelist(domain);
     }
-    await incrementStat('markedSafe');
+    await incrementStat('gmail', 'markedSafe');
     const fresh = await extract(container, messageId);
     if (!fresh) {
       console.warn(
@@ -117,7 +109,7 @@ startObserver(async (messageId, container) => {
   // "reported", and count it as a detection.
   const onReport = async (senderEmail: string): Promise<void> => {
     await addToBlocklist(senderEmail);
-    await incrementStat('detected');
+    await incrementStat('gmail', 'detected');
     console.log('[CredMail] Reported:', senderEmail);
   };
 
@@ -143,13 +135,13 @@ startObserver(async (messageId, container) => {
     `[CredMail] Verdict for ${messageId}: ${verdict.riskLevel} (${verdict.score})`,
   );
   // Stats: cache MISS only, so reopening an email never double-counts.
-  await incrementStat('scanned');
+  await incrementStat('gmail', 'scanned');
   if (verdict.riskLevel === 'Suspicious' || verdict.riskLevel === 'High Risk') {
-    await incrementStat('detected');
+    await incrementStat('gmail', 'detected');
   }
   // Record the flagged email locally (Option C) for inbox-row reflection — display
   // state only; never touches the scanned/detected counters above.
-  await recordThreat(emailData.senderEmail, emailData.subject, verdict);
+  await recordThreat('gmail', emailData.senderEmail, emailData.subject, verdict);
   await render(verdict, container, emailData.senderEmail, onMarkSafe, onReport);
 });
 
@@ -178,7 +170,7 @@ function isInboxView(): boolean {
 async function scanWithRetry(): Promise<void> {
   // Inbox-row scanning is independently toggleable (default on) — when off, the
   // main email-open protection still runs; only row pills stop.
-  const { scan_inbox_rows = true } = await chrome.storage.local.get({ scan_inbox_rows: true });
+  const scan_inbox_rows = await getScanRows('gmail');
   if (!scan_inbox_rows) return;
   await scanInboxRows();
   setTimeout(async () => {

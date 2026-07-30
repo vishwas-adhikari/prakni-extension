@@ -1,7 +1,8 @@
 // Copyright (c) 2026 KanthiraLabs. All rights reserved. Proprietary and confidential.
 import type { Verdict } from '@credmail/core';
 
-const STORE_KEY = 'recent_threats';
+export type Provider = 'gmail' | 'outlook' | 'zoho';
+const storeKey = (provider: Provider): string => `${provider}:recent_threats`;
 const CAP = 20;
 const SUBJECT_PREFIX_LEN = 30;
 
@@ -44,6 +45,7 @@ function firstMaliciousUrl(verdict: Verdict): string {
  * NEVER touches the scanned/detected counters — display state, not stats.
  */
 export async function recordThreat(
+  provider: Provider,
   senderEmail: string,
   subject: string,
   verdict: Verdict,
@@ -53,8 +55,9 @@ export async function recordThreat(
     const subjectPrefix = subjectPrefixOf(subject);
     if (!senderEmail || !subjectPrefix) return; // nothing to match on later
     const key = threatKey(senderEmail, subjectPrefix);
-    const stored = await chrome.storage.local.get({ [STORE_KEY]: [] });
-    const list = (stored[STORE_KEY] as ThreatRecord[]) ?? [];
+    const KEY = storeKey(provider);
+    const stored = await chrome.storage.local.get({ [KEY]: [] });
+    const list = (stored[KEY] as ThreatRecord[]) ?? [];
     const filtered = list.filter((t) => t.key !== key);
     const record: ThreatRecord = {
       key,
@@ -66,20 +69,32 @@ export async function recordThreat(
       maliciousUrl: firstMaliciousUrl(verdict),
     };
     const next = [record, ...filtered].slice(0, CAP);
-    await chrome.storage.local.set({ [STORE_KEY]: next });
+    await chrome.storage.local.set({ [KEY]: next });
   } catch (err) {
     console.error('[Prakni] recordThreat failed:', err);
   }
 }
 
 /** Lightweight list for row reflection: sender + prefix + level. */
-export async function getThreatMatchers(): Promise<
+export async function getThreatMatchers(provider: Provider): Promise<
   { sender: string; subjectPrefix: string; riskLevel: 'Suspicious' | 'High Risk' }[]
 > {
   try {
-    const stored = await chrome.storage.local.get({ [STORE_KEY]: [] });
-    const list = (stored[STORE_KEY] as ThreatRecord[]) ?? [];
+    const KEY = storeKey(provider);
+    const stored = await chrome.storage.local.get({ [KEY]: [] });
+    const list = (stored[KEY] as ThreatRecord[]) ?? [];
     return list.map((t) => ({ sender: t.sender, subjectPrefix: t.subjectPrefix, riskLevel: t.riskLevel }));
+  } catch {
+    return [];
+  }
+}
+
+/** Full threat records for a provider (newest first) — for the dashboard feed. */
+export async function getThreats(provider: Provider): Promise<ThreatRecord[]> {
+  try {
+    const KEY = storeKey(provider);
+    const stored = await chrome.storage.local.get({ [KEY]: [] });
+    return (stored[KEY] as ThreatRecord[]) ?? [];
   } catch {
     return [];
   }
