@@ -518,8 +518,8 @@ async function render(): Promise<void> {
     remove: removeFromBlocklist,
   });
 
-  leftCol.append(protCard);
-  rightCol.append(trustedCard, safeContactsCard, blockedCard);
+  leftCol.append(protCard, blockedCard);
+  rightCol.append(trustedCard, safeContactsCard);
   grid.append(leftCol, rightCol);
 
   // --- Per-provider zone (tabbed) -------------------------------------------
