@@ -163,7 +163,20 @@ export async function scanOutlookRows(): Promise<void> {
       }
       if (!senderEmail) continue; // can't identify sender — skip, don't mark
 
-      // Real verdict (from opening the email) supersedes the row heuristic.
+      // 1) Reported (user's explicit flag) wins over everything. Containment match:
+      // sender is blocklisted OR a blocklisted address appears anywhere in the row text
+      // (e.g. a forwarded "From:" line). Blocklist is global → works cross-provider.
+      const rowTextLower = (row.textContent || '').toLowerCase();
+      const isReported =
+        blocklist.has(senderEmail) ||
+        [...blocklist].some((addr) => addr && rowTextLower.includes(addr));
+      if (isReported) {
+        injectRowPill(row, 'reported');
+        row.setAttribute(ROW_MARK, senderEmail);
+        continue;
+      }
+
+      // 2) Real verdict (from opening the email) supersedes the spoof heuristic.
       const reflected = reflectRow(matchers, senderEmail, row.textContent || '');
       if (reflected) {
         injectRowPill(row, reflected === 'High Risk' ? 'highrisk' : 'suspicious');
@@ -171,12 +184,11 @@ export async function scanOutlookRows(): Promise<void> {
         continue; // real verdict shown — skip heuristic for this row
       }
 
+      // 3) Spoof heuristic.
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
-      const isReported = blocklist.has(senderEmail);
       const isSpoof = isFreemail && mentionsBrand(textContent);
-
-      if (isReported || isSpoof) {
-        injectRowPill(row, isReported ? 'reported' : 'suspicious');
+      if (isSpoof) {
+        injectRowPill(row, 'suspicious');
       }
 
       row.setAttribute(ROW_MARK, senderEmail); // mark after scan

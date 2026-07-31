@@ -164,22 +164,32 @@ export async function scanInboxRows(): Promise<void> {
       const subjectEl = firstEl(row, sel.subject);
       const subject = subjectEl ? (subjectEl.textContent ?? '').trim() : '';
 
-      // Real verdict (from opening the email) supersedes the row heuristic.
+      // 1) Reported (user's explicit flag) wins over everything. Containment match:
+      // flag the row if a blocklisted address is the sender OR appears anywhere in the
+      // row text (e.g. a forwarded "From:" line). Blocklist is global → works cross-provider.
+      const rowTextLower = (row.textContent || '').toLowerCase();
+      const isReported =
+        blocklist.has(senderEmail.toLowerCase()) ||
+        [...blocklist].some((addr) => addr && rowTextLower.includes(addr));
+      if (isReported && subjectEl) {
+        injectRowPill(row, subjectEl, 'reported');
+        row.setAttribute(ROW_MARK, threadId);
+        continue;
+      }
+
+      // 2) Real verdict (from opening the email) supersedes the spoof heuristic.
       const reflected = reflectRow(matchers, senderEmail, row.textContent || '');
       if (reflected && subjectEl) {
         injectRowPill(row, subjectEl, reflected === 'High Risk' ? 'highrisk' : 'suspicious');
         row.setAttribute(ROW_MARK, threadId);
-        continue; // real verdict shown — skip heuristic for this row
+        continue;
       }
 
+      // 3) Spoof heuristic.
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
-
-      const isReported = blocklist.has(senderEmail.toLowerCase());
       const isSpoof = isFreemail && (mentionsBrand(senderName) || mentionsBrand(subject));
-
-      // Blocklist (the user's explicit flag) wins over the heuristic spoof pill.
-      if ((isReported || isSpoof) && subjectEl) {
-        injectRowPill(row, subjectEl, isReported ? 'reported' : 'suspicious');
+      if (isSpoof && subjectEl) {
+        injectRowPill(row, subjectEl, 'suspicious');
       }
 
       row.setAttribute(ROW_MARK, threadId); // mark only after a real scan
