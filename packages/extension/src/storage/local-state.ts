@@ -63,10 +63,19 @@ export async function getWhitelist(): Promise<string[]> {
   return (await getState()).local_whitelist;
 }
 
-export async function addToWhitelist(domain: string): Promise<void> {
-  const list = await getWhitelist();
-  const next = Array.from(new Set([...list, normalize(domain)]));
-  await setState({ local_whitelist: next });
+/**
+ * Trust a domain. Mutually exclusive with the blocklist — an exact match is dropped from
+ * Reported so the two lists can never contradict each other (last action wins).
+ */
+export async function addToWhitelist(domain: string): Promise<{ removedFromReported: boolean }> {
+  const target = normalize(domain);
+  const [white, blocklist] = await Promise.all([getWhitelist(), getBlocklist()]);
+  const removedFromReported = blocklist.includes(target);
+  await setState({
+    local_whitelist: Array.from(new Set([...white, target])),
+    local_blocklist: blocklist.filter((s) => s !== target),
+  });
+  return { removedFromReported };
 }
 
 export async function removeFromWhitelist(domain: string): Promise<void> {
@@ -84,10 +93,16 @@ export async function getSafeContacts(): Promise<string[]> {
   return (await getState()).safe_contacts;
 }
 
-export async function addToSafeContacts(email: string): Promise<void> {
-  const list = await getSafeContacts();
-  const next = Array.from(new Set([...list, normalize(email)]));
-  await setState({ safe_contacts: next });
+/** Mark an address safe. Mutually exclusive with the blocklist (see addToWhitelist). */
+export async function addToSafeContacts(email: string): Promise<{ removedFromReported: boolean }> {
+  const target = normalize(email);
+  const [safe, blocklist] = await Promise.all([getSafeContacts(), getBlocklist()]);
+  const removedFromReported = blocklist.includes(target);
+  await setState({
+    safe_contacts: Array.from(new Set([...safe, target])),
+    local_blocklist: blocklist.filter((s) => s !== target),
+  });
+  return { removedFromReported };
 }
 
 export async function removeFromSafeContacts(email: string): Promise<void> {
@@ -100,10 +115,22 @@ export async function getBlocklist(): Promise<string[]> {
   return (await getState()).local_blocklist;
 }
 
-export async function addToBlocklist(sender: string): Promise<void> {
-  const list = await getBlocklist();
-  const next = Array.from(new Set([...list, normalize(sender)]));
-  await setState({ local_blocklist: next });
+/** Report a sender. Mutually exclusive with the trust lists (see addToWhitelist). */
+export async function addToBlocklist(sender: string): Promise<{ removedFromSafe: boolean }> {
+  const target = normalize(sender);
+  const [blocklist, safe, white] = await Promise.all([
+    getBlocklist(),
+    getSafeContacts(),
+    getWhitelist(),
+  ]);
+  // Exact-address match only — reporting one address must NOT untrust a whole domain.
+  const removedFromSafe = safe.includes(target) || white.includes(target);
+  await setState({
+    local_blocklist: Array.from(new Set([...blocklist, target])),
+    safe_contacts: safe.filter((e) => e !== target),
+    local_whitelist: white.filter((d) => d !== target),
+  });
+  return { removedFromSafe };
 }
 
 export async function removeFromBlocklist(sender: string): Promise<void> {

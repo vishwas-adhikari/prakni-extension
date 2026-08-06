@@ -69,7 +69,7 @@ function listSection(opts: {
   // Extra gate after basic validation; return an error message to show (and reject), or null.
   extraReject?: (v: string) => string | null;
   load: () => Promise<string[]>;
-  add: (v: string) => Promise<void>;
+  add: (v: string) => Promise<void | { removedFromSafe?: boolean; removedFromReported?: boolean }>;
   remove: (v: string) => Promise<void>;
 }): HTMLElement {
   const card = createCard();
@@ -151,6 +151,7 @@ function listSection(opts: {
       x.addEventListener('click', async () => {
         await opts.remove(item);
         await rebuild();
+        window.dispatchEvent(new Event('credmail-lists-updated'));
       });
       row.append(label, x);
       list.appendChild(row);
@@ -162,6 +163,15 @@ function listSection(opts: {
     const div = document.createElement('div');
     div.textContent = msg;
     Object.assign(div.style, { color: '#DC2626', fontSize: '12px', marginTop: '4px' });
+    card.appendChild(div);
+    setTimeout(() => div.remove(), 5000);
+  };
+
+  // Same, in green — used when mutual exclusion moved an address between lists.
+  const showTransientInfo = (msg: string): void => {
+    const div = document.createElement('div');
+    div.textContent = msg;
+    Object.assign(div.style, { color: THEME.colors.success, fontSize: '12px', marginTop: '4px' });
     card.appendChild(div);
     setTimeout(() => div.remove(), 5000);
   };
@@ -181,8 +191,15 @@ function listSection(opts: {
       return;
     }
     input.value = '';
-    await opts.add(value);
+    const result = await opts.add(value);
+    if (result?.removedFromSafe) {
+      showTransientInfo(`Moved ${value} from Safe Contacts to Reported.`);
+    }
+    if (result?.removedFromReported) {
+      showTransientInfo(`Moved ${value} from Reported to this list.`);
+    }
     await rebuild();
+    window.dispatchEvent(new Event('credmail-lists-updated')); // refresh sibling lists live
   };
 
   input.addEventListener('keydown', (e) => {
@@ -195,6 +212,13 @@ function listSection(opts: {
 
   card.append(error, addRow);
   void rebuild();
+
+  // Native event bus: when any list changes (e.g. mutual-exclusion moved an address
+  // out of this card), re-read storage so the removed entry disappears without a reload.
+  window.addEventListener('credmail-lists-updated', () => {
+    void rebuild();
+  });
+
   return card;
 }
 
