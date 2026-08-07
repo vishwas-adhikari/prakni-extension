@@ -13,12 +13,14 @@ import {
   addToWhitelist,
   addToSafeContacts,
   addToBlocklist,
+  getBlocklist,
   incrementStat,
   getScanRows,
 } from '../../storage/local-state';
 import { startOutlookObserver } from './observer';
 import { extract } from './parser';
 import { injectBanner, isBannerTransitioning } from '../../ui/banner';
+import { showConfirmModal } from '../../ui/confirm-modal';
 import { injectPill } from '../../ui/pill';
 import { hijackBadLinks, restoreLinks } from './interceptor';
 import { recordThreat } from '../../storage/threats';
@@ -33,6 +35,36 @@ const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerC
 const verdictCache = new Map<string, { verdict: Verdict; senderEmail: string }>();
 
 const BANNER_ID = 'prakni-outlook-banner';
+
+/**
+ * Mark-Safe gate: if the sender is on the blocklist, trusting them contradicts the user's
+ * own earlier Report, so confirm first. `proceed` is the ONLY path to the green
+ * transition, so nothing changes visually until the user chooses "Allow".
+ */
+const guardMarkSafe = (senderEmail: string, proceed: () => void): void => {
+  void (async (): Promise<void> => {
+    const blocklist = await getBlocklist();
+    const isReported = blocklist.map((s) => s.toLowerCase()).includes(senderEmail.toLowerCase());
+    if (!isReported) {
+      proceed();
+      return;
+    }
+    showConfirmModal({
+      title: 'Warning',
+      bodyLines: [
+        'This sender has been reported as suspicious.',
+        'Marking this sender as Safe will disable phishing warnings for future emails from this address.',
+        'Do you want to continue?',
+      ],
+      highlight: 'reported as suspicious',
+      email: senderEmail,
+      confirmLabel: 'Allow',
+      cancelLabel: 'Block Action',
+      onConfirm: proceed, // green transition + mark-safe run ONLY here
+      // onCancel omitted: the banner stays in its warning state, untouched.
+    });
+  })();
+};
 
 // The reading-pane subject heading — scoped to #ConversationReadingPaneContainer and
 // selected by CONTENT shape (not email / "To:" / date / "[Draft]"), so it survives
@@ -84,6 +116,7 @@ function renderOutlookBanner(
   senderEmail: string,
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
+  guard?: (senderEmail: string, proceed: () => void) => void,
 ): void {
   // Remove any existing Outlook banner (idempotent) — BUT never during a Mark-Safe
   // green transition, or the fade gets destroyed before it finishes (Gmail's shared
@@ -120,7 +153,7 @@ function renderOutlookBanner(
   bodyEl.parentElement.insertBefore(wrapper, bodyEl);
 
   // Shared banner — same design as Gmail.
-  injectBanner(verdict, wrapper, senderEmail, onMarkSafe, onReport);
+  injectBanner(verdict, wrapper, senderEmail, onMarkSafe, onReport, guard);
 }
 
 async function render(
@@ -130,7 +163,7 @@ async function render(
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
 ): Promise<void> {
-  renderOutlookBanner(verdict, senderEmail, onMarkSafe, onReport);
+  renderOutlookBanner(verdict, senderEmail, onMarkSafe, onReport, guardMarkSafe);
 
   const subjectEl = findSubjectElement();
   if (subjectEl) {

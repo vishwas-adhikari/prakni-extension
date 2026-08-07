@@ -188,6 +188,11 @@ export function injectBanner(
   senderEmail: string,
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
+  // Optional gate consulted BEFORE the green Mark-Safe transition starts. It receives a
+  // `proceed` continuation and calls it only if the action should go ahead — so the
+  // banner never turns green on an action the user then cancels. Stays a plain function
+  // reference: the blocklist lookup lives in the adapters, never in this file.
+  guardMarkSafe?: (senderEmail: string, proceed: () => void) => void,
 ): void {
   // A Mark-Safe transition owns this container until its fade completes — don't let
   // a re-score's (silent) verdict clear the green banner out from under it.
@@ -240,9 +245,14 @@ export function injectBanner(
   Object.assign(actions.style, rightColumn);
 
   actions.appendChild(
-    makeButton('✓ Mark Safe', buttonMarkSafe, buttonMarkSafeHover, () =>
-      markSafe(banner, container, senderEmail, onMarkSafe),
-    ),
+    makeButton('✓ Mark Safe', buttonMarkSafe, buttonMarkSafeHover, () => {
+      const proceed = (): void => markSafe(banner, container, senderEmail, onMarkSafe);
+      if (guardMarkSafe) {
+        guardMarkSafe(senderEmail, proceed);
+      } else {
+        proceed();
+      }
+    }),
   );
 
   // Report logs the first flagged link (query-stripped); P1 stub for the intake call.

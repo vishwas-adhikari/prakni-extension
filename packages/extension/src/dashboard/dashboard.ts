@@ -498,6 +498,10 @@ async function render(): Promise<void> {
   // --- Lists ----------------------------------------------------------------
   const trustedCard = listSection({
     title: 'Trusted Domains',
+    subtitle:
+      'Trust an entire organization by its domain (e.g. yourcompany.com). Every sender at ' +
+      'that domain is trusted. Not for public providers like gmail.com — that would trust ' +
+      'everyone on Gmail.',
     emptyText: 'No trusted domains yet',
     placeholder: 'example.com',
     invalidText: 'Enter a valid domain (e.g. example.com) — no spaces or http://',
@@ -514,18 +518,14 @@ async function render(): Promise<void> {
   const safeContactsCard = listSection({
     title: 'Safe Contacts',
     subtitle:
-      "Individual email addresses you've marked safe. Used for public email providers " +
-      'like Gmail where trusting the whole domain would be unsafe.',
+      'Trust one specific person by their exact email address, without trusting their ' +
+      'whole domain. Works for any provider — a Gmail address or a company address alike.',
     emptyText:
-      'No safe contacts yet. When you mark an email safe from a public provider like ' +
-      'Gmail, it appears here.',
+      'No safe contacts yet. Mark an email as safe, or add an address here, to stop ' +
+      'warnings for that exact sender.',
     placeholder: 'friend@gmail.com',
     invalidText: 'Enter a valid email address (must contain @)',
     validate: (v) => v.includes('@') && !/\s/.test(v),
-    extraReject: (v) =>
-      FREE_PROVIDERS.has((v.split('@')[1] ?? '').toLowerCase())
-        ? null
-        : 'Use Trusted Domains instead for non-public email providers.',
     load: getSafeContacts,
     add: addToSafeContacts,
     remove: removeFromSafeContacts,
@@ -533,6 +533,9 @@ async function render(): Promise<void> {
 
   const blockedCard = listSection({
     title: 'Reported Senders',
+    subtitle:
+      "Addresses you've flagged as suspicious. Their emails show a Reported pill in your " +
+      'inbox. Adding a sender here removes them from your trusted lists.',
     emptyText: 'No reported senders yet',
     placeholder: 'sender@example.com',
     invalidText: 'Enter a valid email address (must contain @)',

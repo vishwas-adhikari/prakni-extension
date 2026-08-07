@@ -13,12 +13,14 @@ import {
   addToWhitelist,
   addToSafeContacts,
   addToBlocklist,
+  getBlocklist,
   incrementStat,
   getScanRows,
 } from '../../storage/local-state';
 import { startObserver } from './observer';
 import { extract } from './parser';
 import { injectBanner } from '../../ui/banner';
+import { showConfirmModal } from '../../ui/confirm-modal';
 import { injectPill } from '../../ui/pill';
 import { hijackBadLinks, restoreLinks } from './interceptor';
 import { recordThreat } from '../../storage/threats';
@@ -34,6 +36,36 @@ const FREE_PROVIDERS = new Set((freeProviders as string[]).map((d) => d.toLowerC
 // sender alongside the verdict so the cache-hit path can re-render the banner
 // WITHOUT re-extracting; everything else (emailData, container) is re-derived live.
 const verdictCache = new Map<string, { verdict: Verdict; senderEmail: string }>();
+
+/**
+ * Mark-Safe gate: if the sender is on the blocklist, trusting them contradicts the user's
+ * own earlier Report, so confirm first. `proceed` is the ONLY path to the green
+ * transition, so nothing changes visually until the user chooses "Allow".
+ */
+const guardMarkSafe = (senderEmail: string, proceed: () => void): void => {
+  void (async (): Promise<void> => {
+    const blocklist = await getBlocklist();
+    const isReported = blocklist.map((s) => s.toLowerCase()).includes(senderEmail.toLowerCase());
+    if (!isReported) {
+      proceed();
+      return;
+    }
+    showConfirmModal({
+      title: 'Warning',
+      bodyLines: [
+        'This sender has been reported as suspicious.',
+        'Marking this sender as Safe will disable phishing warnings for future emails from this address.',
+        'Do you want to continue?',
+      ],
+      highlight: 'reported as suspicious',
+      email: senderEmail,
+      confirmLabel: 'Allow',
+      cancelLabel: 'Block Action',
+      onConfirm: proceed, // green transition + mark-safe run ONLY here
+      // onCancel omitted: the banner stays in its warning state, untouched.
+    });
+  })();
+};
 
 /** The reading-pane subject element (OTA subject selectors), for the pill. */
 async function findSubjectElement(): Promise<HTMLElement | null> {
@@ -59,7 +91,7 @@ async function render(
 ): Promise<void> {
   // Core's Verdict is structurally the UI's VerdictView; container is an Element
   // here but the banner only uses ParentNode ops.
-  injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe, onReport);
+  injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe, onReport, guardMarkSafe);
   const subjectEl = await findSubjectElement();
   if (subjectEl) injectPill(verdict, subjectEl);
 
