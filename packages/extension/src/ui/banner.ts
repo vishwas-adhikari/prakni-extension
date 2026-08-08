@@ -54,6 +54,14 @@ function displayUrl(url: string): string {
   return stripped.length > LINK_MAX ? stripped.slice(0, LINK_MAX) + '…' : stripped;
 }
 
+/** Greyed, inert Report styling — shared by the already-reported and just-reported states. */
+const buttonReportDisabled: StyleMap = {
+  background: '#E5E7EB',
+  borderColor: '#E5E7EB',
+  color: '#757575',
+  cursor: 'default',
+};
+
 function makeButton(
   label: string,
   variant: StyleMap,
@@ -193,6 +201,9 @@ export function injectBanner(
   // banner never turns green on an action the user then cancels. Stays a plain function
   // reference: the blocklist lookup lives in the adapters, never in this file.
   guardMarkSafe?: (senderEmail: string, proceed: () => void) => void,
+  // True when the sender is already on the blocklist — the Report button renders greyed
+  // and inert (no click listener at all) instead of offering a fresh report.
+  alreadyReported?: boolean,
 ): void {
   // A Mark-Safe transition owns this container until its fade completes — don't let
   // a re-score's (silent) verdict clear the green banner out from under it.
@@ -258,18 +269,18 @@ export function injectBanner(
   // Report logs the first flagged link (query-stripped); P1 stub for the intake call.
   // No flagged links (e.g. content-only warning) → fall back to the sender address.
   const reportUrl = verdict.reasons.flatMap((r) => r.affectedLinks ?? [])[0] || senderEmail;
-  const reportBtn = makeButton('🚩 Report', buttonReport, buttonReportHover, () => {
-    console.log('[CredMail] Report:', reportUrl.split('?')[0]);
-    onReport(senderEmail);
-    reportBtn.disabled = true;
-    reportBtn.textContent = '✓ Reported';
-    Object.assign(reportBtn.style, {
-      background: '#E5E7EB',
-      borderColor: '#E5E7EB',
-      color: '#757575',
-      cursor: 'default',
-    });
-  });
+  // Report button: greyed + inert if the sender is already on the blocklist (no live
+  // click listener at all), otherwise a live "flag this sender" action.
+  const reportBtn = alreadyReported
+    ? makeButton('✓ Reported', buttonReportDisabled, buttonReportDisabled, () => {})
+    : makeButton('🚩 Report', buttonReport, buttonReportHover, () => {
+        console.log('[CredMail] Report:', reportUrl.split('?')[0]);
+        onReport(senderEmail);
+        reportBtn.disabled = true;
+        reportBtn.textContent = '✓ Reported';
+        Object.assign(reportBtn.style, buttonReportDisabled);
+      });
+  if (alreadyReported) reportBtn.disabled = true;
   actions.appendChild(reportBtn);
 
   // Footer: product logo + local-analysis assurance.

@@ -117,6 +117,7 @@ function renderOutlookBanner(
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
   guard?: (senderEmail: string, proceed: () => void) => void,
+  alreadyReported?: boolean,
 ): void {
   // Remove any existing Outlook banner (idempotent) — BUT never during a Mark-Safe
   // green transition, or the fade gets destroyed before it finishes (Gmail's shared
@@ -153,7 +154,7 @@ function renderOutlookBanner(
   bodyEl.parentElement.insertBefore(wrapper, bodyEl);
 
   // Shared banner — same design as Gmail.
-  injectBanner(verdict, wrapper, senderEmail, onMarkSafe, onReport, guard);
+  injectBanner(verdict, wrapper, senderEmail, onMarkSafe, onReport, guard, alreadyReported);
 }
 
 async function render(
@@ -163,7 +164,13 @@ async function render(
   onMarkSafe: (senderEmail: string) => void,
   onReport: (senderEmail: string) => void,
 ): Promise<void> {
-  renderOutlookBanner(verdict, senderEmail, onMarkSafe, onReport, guardMarkSafe);
+  // Reported state is read fresh per render, so reopening an email from a sender reported
+  // earlier shows the inert "✓ Reported" button rather than a fresh red one.
+  const blocklist = await getBlocklist();
+  const alreadyReported = blocklist
+    .map((s) => s.toLowerCase())
+    .includes(senderEmail.toLowerCase());
+  renderOutlookBanner(verdict, senderEmail, onMarkSafe, onReport, guardMarkSafe, alreadyReported);
 
   const subjectEl = findSubjectElement();
   if (subjectEl) {
@@ -262,15 +269,25 @@ import { scanOutlookRows } from './row-scanner';
 
 const ROW_SCAN_DEBOUNCE_MS = 800;
 
-function isListView(): boolean {
-  return (
-    !document.querySelector('[aria-label="Email message"]') &&
-    !document.querySelector('[data-test-id="mailMessageBodyContainer"]') &&
-    !document.querySelector('.ReadingPaneContainer') &&
-    !document.querySelector('#ConversationReadingPaneContainer') &&
-    !document.querySelector('.BodyFragment') &&
-    !document.querySelector("div[role='document']")
-  );
+/**
+ * Are inbox rows actually on screen? Outlook's wide layout shows the row list AND a
+ * reading pane at the same time, so the previous gate ("no reading pane present")
+ * wrongly skipped scanning whenever an email was open — e.g. refreshing on a /id/
+ * URL. Gate on the row list actually existing instead.
+ *
+ * Mirrors row-scanner.ts's DEFAULT_ROW_SELECTORS: list container first, then rows
+ * scoped inside it (including the div[role="row"] fallback). Deliberately permissive —
+ * this only decides whether it's worth scanning; scanOutlookRows() re-resolves the
+ * selectors itself (honouring OTA overrides) and no-ops when it finds nothing. A false
+ * positive costs one no-op call; a false negative would silently skip scanning, which
+ * is the bug this replaces.
+ */
+function hasInboxRows(): boolean {
+  for (const listSel of ['[aria-label="Message list"]', '.customScrollBar']) {
+    const list = document.querySelector(listSel);
+    if (list && list.querySelector('div[role="option"], div[role="row"]')) return true;
+  }
+  return false;
 }
 
 async function scanWithRetry(): Promise<void> {
@@ -288,13 +305,13 @@ new MutationObserver(() => {
   rowScanTimer = window.setTimeout(async () => {
     try {
       const { is_active } = await chrome.storage.local.get({ is_active: true });
-      if (is_active && isListView()) await scanWithRetry();
+      if (is_active && hasInboxRows()) await scanWithRetry();
     } catch { /* best effort */ }
   }, ROW_SCAN_DEBOUNCE_MS);
 }).observe(document.body, { childList: true, subtree: true });
 
 setTimeout(async () => {
-  if (!isListView()) return;
+  if (!hasInboxRows()) return;
   try {
     const { is_active } = await chrome.storage.local.get({ is_active: true });
     if (is_active) await scanWithRetry();

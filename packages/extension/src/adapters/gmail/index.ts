@@ -91,7 +91,21 @@ async function render(
 ): Promise<void> {
   // Core's Verdict is structurally the UI's VerdictView; container is an Element
   // here but the banner only uses ParentNode ops.
-  injectBanner(verdict, container as HTMLElement, senderEmail, onMarkSafe, onReport, guardMarkSafe);
+  // Reported state is read fresh per render, so reopening an email from a sender reported
+  // earlier shows the inert "✓ Reported" button rather than a fresh red one.
+  const blocklist = await getBlocklist();
+  const alreadyReported = blocklist
+    .map((s) => s.toLowerCase())
+    .includes(senderEmail.toLowerCase());
+  injectBanner(
+    verdict,
+    container as HTMLElement,
+    senderEmail,
+    onMarkSafe,
+    onReport,
+    guardMarkSafe,
+    alreadyReported,
+  );
   const subjectEl = await findSubjectElement();
   if (subjectEl) injectPill(verdict, subjectEl);
 
