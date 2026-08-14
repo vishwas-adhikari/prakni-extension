@@ -2,6 +2,26 @@
 // Pure domain/URL helpers. No DOM, no network — just string parsing.
 import { ESP_DOMAINS, TRUSTED_DOMAINS } from "../data";
 
+/**
+ * Two-label public suffixes under which registrations happen at the THIRD level
+ * (e.g. sbi.co.in, not co.in). Not exhaustive — a curated set covering the India
+ * beachhead plus common global ccTLDs. A full public-suffix list is a later-phase
+ * enhancement; this fixes the cases that matter for trust/brand matching today.
+ */
+const MULTI_PART_SUFFIXES: ReadonlySet<string> = new Set([
+  // India (beachhead)
+  "co.in", "net.in", "org.in", "gen.in", "firm.in", "ind.in",
+  "gov.in", "nic.in", "ac.in", "edu.in", "res.in", "mil.in",
+  // United Kingdom
+  "co.uk", "org.uk", "me.uk", "ltd.uk", "plc.uk", "net.uk", "sch.uk",
+  "ac.uk", "gov.uk", "nhs.uk",
+  // Australia / NZ
+  "com.au", "net.au", "org.au", "edu.au", "gov.au", "id.au",
+  "co.nz", "net.nz", "org.nz", "govt.nz", "ac.nz",
+  // Other common
+  "com.br", "com.cn", "com.hk", "com.sg", "com.mx", "co.jp", "co.za", "co.kr",
+]);
+
 /** Lowercased host from an email address, or "" if unparseable. */
 export function domainFromEmail(email: string): string {
   const at = email.lastIndexOf("@");
@@ -19,14 +39,18 @@ export function hostFromUrl(url: string): string {
 }
 
 /**
- * Registrable domain — the last two labels (e.g. mail.paypal.com → paypal.com).
- * A deliberately simple heuristic; a full public-suffix list is a later-phase
- * enhancement. Good enough for exact-match trust and brand comparison at P0.
+ * Registrable domain — normally the last two labels (mail.paypal.com → paypal.com),
+ * but three labels under a known multi-part public suffix (sbi.co.in → sbi.co.in,
+ * NOT co.in). See MULTI_PART_SUFFIXES.
  */
 export function registrableDomain(host: string): string {
   const labels = host.split(".").filter(Boolean);
   if (labels.length <= 2) return host;
-  return labels.slice(-2).join(".");
+  const lastTwo = labels.slice(-2).join(".");
+  if (MULTI_PART_SUFFIXES.has(lastTwo)) {
+    return labels.slice(-3).join(".");
+  }
+  return lastTwo;
 }
 
 /** True if `host` is exactly `domain` or a subdomain of it. */
