@@ -24,8 +24,10 @@ const CONTENT_WEAK_RULES: ReadonlySet<string> = new Set([
  *                signal — with score ≥ suspiciousThreshold
  *   Safe       : everything else
  *
- * The score is the clamped weight sum, used both for display and as the secondary
- * threshold guard. All three thresholds come from the OTA-tunable ScoringConfig.
+ * `rawScore` is the clamped weight sum and is what the threshold gates above run
+ * on. `score` is the banded *display* value derived from the risk level afterwards,
+ * so the number shown can never contradict the label. All three thresholds come from
+ * the OTA-tunable ScoringConfig.
  */
 export function score(results: RuleResult[], config: ScoringConfig): Verdict {
   const strong = results.filter((r) => r.strength === "strong");
@@ -52,9 +54,37 @@ export function score(results: RuleResult[], config: ScoringConfig): Verdict {
   }
 
   const silent = riskLevel === "Safe";
+
+  // ---- Derived display score (banded to match riskLevel) --------------------
+  // Detection above is unchanged. This only shapes the NUMBER shown to the user so it
+  // can never contradict the label (no "100/100 but Suspicious"). Both bands use flat
+  // per-signal contributions with a weak-count cap, which keeps scores monotonic
+  // (an extra STRONG signal always outranks added weak ones) and non-saturating as the
+  // rule set grows toward ~20 rules. See docs/detection.md and SCALING.md.
+  const clamp = (n: number, lo: number, hi: number): number =>
+    Math.max(lo, Math.min(hi, n));
+
+  // Cap the weak contribution so many weak signals can never overtake a strong one.
+  const cappedWeak = Math.min(weak.length, 4);
+
+  let displayScore = 0;
+  if (riskLevel === "Suspicious") {
+    // Band 30–69. One strong signal outranks a weak pair (45-style lead preserved):
+    //   +15 for a lone strong signal, +4 per weak signal (capped at 4).
+    const singleStrongBonus = strong.length === 1 ? 15 : 0;
+    displayScore = clamp(30 + singleStrongBonus + 4 * cappedWeak, 30, 69);
+  } else if (riskLevel === "High Risk") {
+    // Band 70–100. +15 per strong signal beyond the required two, +3 per weak (capped).
+    // Weak is capped at 4 so 2-strong-plus-many-weak can never exceed 3-strong (monotonic).
+    const extraStrong = 15 * Math.max(0, strong.length - 2);
+    displayScore = clamp(70 + extraStrong + 3 * cappedWeak, 70, 100);
+  }
+  // Safe → displayScore stays 0.
+
   return {
     riskLevel,
-    score: total,
+    score: displayScore,
+    rawScore: total,
     silent,
     reasons: silent ? [] : results,
   };

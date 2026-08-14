@@ -45,7 +45,8 @@ export interface MlResult {
 
 export interface Verdict {
   riskLevel: "Safe" | "Suspicious" | "High Risk";
-  score: number; // 0–100 for display
+  score: number; // 0–100, banded to match riskLevel (Safe→0, Suspicious→30–69, High Risk→70–100)
+  rawScore: number; // clamped weight sum, pre-banding (debug / tests / future OTA)
   silent: boolean; // true when Safe → render nothing
   reasons: RuleResult[]; // populated only for Suspicious / High Risk
   ml?: MlResult;

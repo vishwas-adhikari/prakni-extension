@@ -12,6 +12,7 @@ export { DEFAULT_CONFIG } from "./config";
 const SAFE_AND_SILENT: Verdict = {
   riskLevel: "Safe",
   score: 0,
+  rawScore: 0,
   silent: true,
   reasons: [],
 };
