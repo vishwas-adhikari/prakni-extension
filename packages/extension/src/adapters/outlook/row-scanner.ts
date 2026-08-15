@@ -25,6 +25,57 @@ const BRAND_PATTERNS = Object.keys(brands as Record<string, string>).map(
   (b) => new RegExp(`\\b${b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'),
 );
 
+// Content-signal patterns — replicated locally (this file imports nothing from core,
+// same as BRAND_PATTERNS). Mirror of core's urgency/financial/credential rules; DELIVERY
+// is row-local (no core delivery rule yet). Used for the corroboration heuristic below.
+const URGENCY_PATTERNS: RegExp[] = [
+  /\bact (now|immediately|fast)\b/i,
+  /\b(within|in) \d+ ?(hours?|minutes?|hrs?)\b/i,
+  /\bimmediate(ly)? (action|attention) (required|needed)\b/i,
+  /\b(account|access) (will be|has been) (suspended|blocked|locked|deactivated)\b/i,
+  /\b(urgent|final notice|last warning)\b/i,
+  /\bbefore it'?s too late\b/i,
+  /\bverify (now|immediately)\b/i,
+  /\bexpires? in\b/i,
+];
+const FINANCIAL_PATTERNS: RegExp[] = [
+  /\bwire transfer\b/i,
+  /\bgift cards?\b/i,
+  /\b(bitcoin|crypto(currency)?|usdt|ethereum)\b/i,
+  /\b(share|send|update|verify|confirm) your (bank|card|account)(?:\s+\w+){0,2} (details|number|information)\b/i,
+  /\bpayment (failed|declined|could not be processed)\b/i,
+  /\b(tax|gst) (refund|notice|demand)\b/i,
+  /\b(kyc|pan) (update|verification|pending)\b/i,
+  /\bclaim your (refund|reward|prize)\b/i,
+];
+const CREDENTIAL_PATTERNS: RegExp[] = [
+  /verify your (account|identity|email|details)/i,
+  /confirm your (account|identity|password|details)/i,
+  /update your (password|account|billing|payment)/i,
+  /(sign|log) ?in to (your|verify)/i,
+  /(unlock|re-?activate|restore) your account/i,
+  /your account (has been|will be) (suspended|locked|disabled|deactivated)/i,
+  /\baccount verification\b/i,
+  /\baccount update\b/i,
+];
+const DELIVERY_PATTERNS: RegExp[] = [
+  /\b(package|parcel|shipment|delivery)\b.*\b(could not|failed|held|pending|reschedule|confirm)\b/i,
+  /\b(could not|failed to|unable to) (deliver|be delivered)\b/i,
+  /\bcustoms (fee|clearance|charge)\b/i,
+];
+
+/** How many CONTENT-signal categories fire in `text` (brand/urgency/financial/credential/delivery). */
+function contentSignalCount(text: string): number {
+  if (!text) return 0;
+  let n = 0;
+  if (mentionsBrand(text)) n++;
+  if (URGENCY_PATTERNS.some((re) => re.test(text))) n++;
+  if (FINANCIAL_PATTERNS.some((re) => re.test(text))) n++;
+  if (CREDENTIAL_PATTERNS.some((re) => re.test(text))) n++;
+  if (DELIVERY_PATTERNS.some((re) => re.test(text))) n++;
+  return n;
+}
+
 const ROW_PILL_BASE: Record<string, string> = {
   display: 'inline-block',
   fontSize: '11px',
@@ -185,8 +236,9 @@ export async function scanOutlookRows(): Promise<void> {
       }
 
       // 3) Spoof heuristic.
+      // Corroboration heuristic (see gmail/row-scanner.ts): freemail AND >=1 content signal.
       const isFreemail = FREE_PROVIDERS.has(domainOf(senderEmail));
-      const isSpoof = isFreemail && mentionsBrand(textContent);
+      const isSpoof = isFreemail && contentSignalCount(textContent) >= 1;
       if (isSpoof) {
         injectRowPill(row, 'suspicious');
       }
