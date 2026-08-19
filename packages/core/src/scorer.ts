@@ -7,10 +7,15 @@ import { RuleResult, ScoringConfig, Verdict } from "./types";
  * reminder is full of urgency and finance language — so a pair of them on their
  * own is NOT corroboration. A corroborating weak pair must include at least one
  * structural (URL/sender-based) weak signal. See docs/detection.md §3.
+ *
+ * This set is consulted only over results whose strength is "weak", so a rule
+ * that has both tiers (brand-mismatch: strong on the sender name, weak on the
+ * subject) is classified here purely by its weak, content-derived tier.
  */
 const CONTENT_WEAK_RULES: ReadonlySet<string> = new Set([
   "urgency",
   "financial",
+  "brand-mismatch",
 ]);
 
 /**
