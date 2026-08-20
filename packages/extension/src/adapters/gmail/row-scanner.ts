@@ -215,13 +215,12 @@ export async function scanInboxRows(): Promise<void> {
       const subjectEl = firstEl(row, sel.subject);
       const subject = subjectEl ? (subjectEl.textContent ?? '').trim() : '';
 
-      // 1) Reported (user's explicit flag) wins over everything. Containment match:
-      // flag the row if a blocklisted address is the sender OR appears anywhere in the
-      // row text (e.g. a forwarded "From:" line). Blocklist is global → works cross-provider.
-      const rowTextLower = (row.textContent || '').toLowerCase();
-      const isReported =
-        blocklist.has(senderEmail.toLowerCase()) ||
-        [...blocklist].some((addr) => addr && rowTextLower.includes(addr));
+      // 1) Reported (user's explicit flag) wins over everything. Flag the row only if
+      // the SENDER is blocklisted. (Do NOT match on row text — a reported address merely
+      // mentioned in a quoted reply or preview snippet is not the sender, and matching
+      // text caused false Reported pills on legit mail.) Blocklist is global and
+      // lowercased → compare the sender lowercased; works cross-provider.
+      const isReported = blocklist.has(senderEmail.toLowerCase());
       if (isReported && subjectEl) {
         injectRowPill(row, subjectEl, 'reported');
         row.setAttribute(ROW_MARK, threadId);

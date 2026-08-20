@@ -214,13 +214,12 @@ export async function scanOutlookRows(): Promise<void> {
       }
       if (!senderEmail) continue; // can't identify sender — skip, don't mark
 
-      // 1) Reported (user's explicit flag) wins over everything. Containment match:
-      // sender is blocklisted OR a blocklisted address appears anywhere in the row text
-      // (e.g. a forwarded "From:" line). Blocklist is global → works cross-provider.
-      const rowTextLower = (row.textContent || '').toLowerCase();
-      const isReported =
-        blocklist.has(senderEmail) ||
-        [...blocklist].some((addr) => addr && rowTextLower.includes(addr));
+      // 1) Reported (user's explicit flag) wins over everything. Flag the row only if the
+      // SENDER is blocklisted. (See gmail/row-scanner.ts — matching on row text caused
+      // false Reported pills on legit mail that merely mentions the address.) senderEmail
+      // is already lowercased at both assignment points above, matching the lowercased
+      // blocklist Set.
+      const isReported = blocklist.has(senderEmail);
       if (isReported) {
         injectRowPill(row, 'reported');
         row.setAttribute(ROW_MARK, senderEmail);
