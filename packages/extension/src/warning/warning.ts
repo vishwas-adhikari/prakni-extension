@@ -65,9 +65,18 @@ function render(): void {
     boxSizing: 'border-box',
   });
 
-  const icon = document.createElement('div');
-  icon.textContent = '🛡️';
-  Object.assign(icon.style, { fontSize: '64px', lineHeight: '1', marginBottom: '16px' });
+  const icon = document.createElement('img');
+  icon.src = chrome.runtime.getURL('icons/prakni_logo_nobg.png');
+  icon.alt = 'Prakni';
+  Object.assign(icon.style, {
+    width: '64px',
+    height: '64px',
+    objectFit: 'contain',
+    marginBottom: '16px',
+    display: 'block',
+    marginLeft: 'auto',
+    marginRight: 'auto',
+  });
 
   const headline = document.createElement('h1');
   headline.textContent = 'Phishing Link Blocked';
